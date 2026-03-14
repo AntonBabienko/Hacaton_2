@@ -9,10 +9,12 @@ import { GeneratedRecipe } from '@/types'
 import { DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
+import { useActiveMascot } from '@/components/mascot-provider'
 
 function GenerateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const activeMascot = useActiveMascot()
   const initialMode = searchParams.get('mode') === 'random' ? 'random' : 'photo'
 
   const [mode, setMode] = useState<'photo' | 'random'>(initialMode)
@@ -164,7 +166,7 @@ function GenerateContent() {
     return (
       <div className="space-y-4">
         <div className="flex justify-center">
-          <Mascot name="cauldron" mood="happy" size={80} message="Обери рецепт!" animation="pop" />
+          <Mascot name={activeMascot as any} mood="happy" size={80} message="Обери рецепт!" animation="pop" />
         </div>
         <div className="space-y-3">
           {recipes.map((recipe, i) => (
@@ -215,7 +217,7 @@ function GenerateContent() {
     return (
       <div className="space-y-5">
         <div className="flex justify-center">
-          <Mascot name="cheese" mood="happy" size={80} message="Ось що я знайшов!" animation="pop" />
+          <Mascot name={activeMascot as any} mood="happy" size={80} message="Ось що я знайшов!" animation="pop" />
         </div>
         <div>
           <p className="text-sm text-gray-500 mt-1">
@@ -258,7 +260,7 @@ function GenerateContent() {
   return (
     <div className="space-y-5">
       <div className="flex justify-center">
-        <Mascot name="pepper" mood="happy" size={90} message="Що приготуємо?" animation="pop" />
+        <Mascot name={activeMascot as any} mood="happy" size={90} message="Що приготуємо?" animation="pop" />
       </div>
 
       {/* Mode tabs */}

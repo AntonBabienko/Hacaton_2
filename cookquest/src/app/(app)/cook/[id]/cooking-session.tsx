@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { formatTime } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
+import { useActiveMascot } from '@/components/mascot-provider'
 
 interface Props {
   session: any
@@ -18,6 +19,7 @@ interface Props {
 
 export default function CookingSession({ session, recipe, userId, cookCount }: Props) {
   const router = useRouter()
+  const activeMascot = useActiveMascot()
   const supabase = createClient()
   const [elapsed, setElapsed] = useState(0)
   const [currentStep, setCurrentStep] = useState(0)
@@ -261,7 +263,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
 
       {/* Mascot encouragement */}
       {progress >= 100 && (
-        <Mascot name="broccoli" mood="happy" size={80} message="Чудова робота!" animation="celebrate" />
+        <Mascot name={activeMascot as any} mood="happy" size={80} message="Чудова робота!" animation="celebrate" />
       )}
 
       <button

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { DEFAULT_MASCOT } from '@/lib/constants'
 import ProfileContent from './profile-content'
 
 export default async function ProfilePage() {
@@ -19,9 +20,20 @@ export default async function ProfilePage() {
     .eq('user_id', user.id)
     .order('saved_at', { ascending: false })
 
+  // Resolve active mascot key from current_skin_id
+  let activeSkinEmoji = DEFAULT_MASCOT
+  if (profile?.current_skin_id) {
+    const { data: skin } = await supabase
+      .from('skins')
+      .select('emoji')
+      .eq('id', profile.current_skin_id)
+      .single()
+    if (skin?.emoji) activeSkinEmoji = skin.emoji
+  }
+
   return (
     <ProfileContent
-      profile={profile}
+      profile={{ ...profile, active_skin_emoji: activeSkinEmoji }}
       savedRecipes={savedRecipes || []}
     />
   )

@@ -9,6 +9,7 @@ import { BATTLE_MULTIPLIER, DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/c
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
+import { useActiveMascot } from '@/components/mascot-provider'
 
 interface Props {
   battle: any
@@ -18,6 +19,7 @@ interface Props {
 
 export default function BattlePage({ battle, userId, isChallenger }: Props) {
   const router = useRouter()
+  const activeMascot = useActiveMascot()
   const supabase = createClient()
   const [currentBattle, setCurrentBattle] = useState(battle)
   const [ingredientsOpen, setIngredientsOpen] = useState(false)
@@ -186,7 +188,7 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
             : 'bg-gradient-to-br from-gray-500/10 to-gray-600/10 border-white/5'
         )}>
           <Mascot
-            name="knightpan"
+            name={activeMascot as any}
             mood={won ? 'happy' : 'sad'}
             size={120}
             animation={won ? 'celebrate' : 'shake'}

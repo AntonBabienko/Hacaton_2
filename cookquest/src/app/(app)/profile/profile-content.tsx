@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Download, BookOpen, Zap } from 'lucide-react'
 import { getLevelInfo, getXpProgress } from '@/lib/utils'
-import { DIFFICULTY_LABELS, DIFFICULTY_COLORS, MASCOT_ITEMS, DEFAULT_MASCOT } from '@/lib/constants'
+import { DIFFICULTY_LABELS, DIFFICULTY_COLORS, MASCOT_ITEMS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -16,7 +16,8 @@ interface Props {
 }
 
 export default function ProfileContent({ profile, savedRecipes }: Props) {
-  const [activeMascot, setActiveMascot] = useState(profile?.active_mascot || DEFAULT_MASCOT)
+  // activeMascot comes from props — profile.active_skin_emoji is resolved server-side
+  const [activeMascot, setActiveMascot] = useState(profile?.active_skin_emoji || 'broccoli')
   const supabase = createClient()
 
   const levelInfo = getLevelInfo(profile?.xp || 0)
@@ -27,11 +28,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
   const circumference = 2 * Math.PI * radius
   const dashOffset = circumference - (xpProgress / 100) * circumference
 
-  async function changeMascot(key: string) {
-    await supabase.from('profiles').update({ active_mascot: key }).eq('id', profile.id)
-    setActiveMascot(key)
-    toast.success('Маскот змінено!')
-  }
+  // Mascot changes happen in the Shop — this is display only
 
   async function exportRecipePDF(recipe: any) {
     const { jsPDF } = await import('jspdf')
@@ -153,7 +150,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
         </h2>
         {savedRecipes.length === 0 ? (
           <div className="py-4">
-            <Mascot name="stove" mood="neutral" size={100} message="Ще немає рецептів. Час готувати!" animation="bounce" />
+            <Mascot name={activeMascot as any} mood="neutral" size={100} message="Ще немає рецептів. Час готувати!" animation="bounce" />
           </div>
         ) : (
           <div className="space-y-2">

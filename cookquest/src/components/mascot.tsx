@@ -162,10 +162,12 @@ export default function Mascot({
   const controls = useAnimation()
 
   useEffect(() => {
-    if (random && !name) {
+    if (name) {
+      setMascotName(name)
+    } else if (random) {
       setMascotName(MASCOTS[Math.floor(Math.random() * MASCOTS.length)])
     }
-  }, [random, name])
+  }, [name, random])
 
   useEffect(() => {
     setCurrentMood(mood)

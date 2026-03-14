@@ -43,7 +43,15 @@ export default async function HomePage() {
   const levelInfo = getLevelInfo(profile?.xp || 0)
   const xpProgress = getXpProgress(profile?.xp || 0)
   const cuisine = getCurrentCuisine()
-  const userMascot = profile?.active_mascot || DEFAULT_MASCOT
+  let userMascot = DEFAULT_MASCOT
+  if (profile?.current_skin_id) {
+    const { data: activeSkin } = await supabase
+      .from('skins')
+      .select('emoji')
+      .eq('id', profile.current_skin_id)
+      .single()
+    if (activeSkin?.emoji) userMascot = activeSkin.emoji
+  }
   const mascotMood = totalCooked >= 3 ? 'happy' : totalCooked >= 1 ? 'neutral' : 'happy'
 
   // Greeting messages
@@ -65,7 +73,7 @@ export default async function HomePage() {
       {/* Mascot greeting */}
       <div className="flex justify-center animate-slide-up">
         <MascotStatic
-          name={userMascot}
+          name={userMascot as any}
           mood={mascotMood}
           size={100}
           message={greeting}

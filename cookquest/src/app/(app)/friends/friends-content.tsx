@@ -5,15 +5,23 @@ import { toast } from 'sonner'
 import { Users, Search, UserPlus, Check, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
+import { useActiveMascot } from '@/components/mascot-provider'
 
 interface Props {
   userId: string
   friends: any[]
   incomingRequests: any[]
   outgoingRequests: any[]
+  skinMap: Record<string, string>
 }
 
-export default function FriendsContent({ userId, friends: initialFriends, incomingRequests: initialIncoming, outgoingRequests: initialOutgoing }: Props) {
+export default function FriendsContent({ userId, friends: initialFriends, incomingRequests: initialIncoming, outgoingRequests: initialOutgoing, skinMap }: Props) {
+  const activeMascot = useActiveMascot()
+
+  function getFriendMascot(friend: any): string {
+    if (!friend?.current_skin_id) return 'broccoli'
+    return skinMap[friend.current_skin_id] || 'broccoli'
+  }
   const supabase = createClient()
   const [friends, setFriends] = useState(initialFriends)
   const [incoming, setIncoming] = useState(initialIncoming)
@@ -199,14 +207,15 @@ export default function FriendsContent({ userId, friends: initialFriends, incomi
         <h2 className="font-bold text-white text-sm mb-3">Мої друзі ({friends.length})</h2>
         {friends.length === 0 ? (
           <div className="py-4">
-            <Mascot name="cheese" mood="neutral" size={100} message="Знайди друзів вище!" animation="idle" />
+            <Mascot name={activeMascot as any} mood="neutral" size={100} message="Знайди друзів вище!" animation="idle" />
           </div>
         ) : (
           <div className="space-y-1">
             {friends.map(f => (
               <div key={f.id} className="flex items-center gap-3 p-2.5 hover:bg-white/5 rounded-xl transition-colors">
-                <div className="w-9 h-9 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400 font-bold text-sm">
-                  {f.friend?.username?.[0]?.toUpperCase()}
+                <div className="w-9 h-9 bg-blue-500/10 rounded-xl flex items-center justify-center overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/mascots/${getFriendMascot(f.friend)}_happy.png`} alt="" width={32} height={32} className="drop-shadow-sm" />
                 </div>
                 <div>
                   <p className="font-bold text-sm text-white">{f.friend?.username}</p>

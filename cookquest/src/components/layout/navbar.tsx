@@ -8,16 +8,18 @@ import { cn } from '@/lib/utils'
 import {
   Home, ChefHat, Trophy, ShoppingBag, Target, Users, LogOut
 } from 'lucide-react'
+import { useActiveMascot } from '@/components/mascot-provider'
 
 interface NavbarProps {
   profile: User | null
   activeMascot: string
 }
 
-export default function Navbar({ profile, activeMascot }: NavbarProps) {
+export default function Navbar({ profile }: NavbarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+  const activeMascot = useActiveMascot()
 
   async function handleLogout() {
     await supabase.auth.signOut()

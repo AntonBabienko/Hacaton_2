@@ -4,11 +4,7 @@ import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Mascot from '@/components/mascot'
-
-const NODE_MASCOTS = [
-  'cauldron', 'broccoli', 'cheese', 'pepper',
-  'slime', 'icecream', 'stove',
-] as const
+import { useActiveMascot } from '@/components/mascot-provider'
 
 // Map dimensions
 const MAP_WIDTH = 340
@@ -58,6 +54,7 @@ function generateSvgPath(nodes: { x: number; y: number }[]): string {
 }
 
 export default function QuestMap({ challenges, completedIds, today, cuisine }: Props) {
+  const activeMascot = useActiveMascot()
   const activeRef = useRef<HTMLDivElement>(null)
   const completedSet = new Set(completedIds)
 
@@ -87,7 +84,7 @@ export default function QuestMap({ challenges, completedIds, today, cuisine }: P
   if (challenges.length === 0) {
     return (
       <div className="text-center py-12">
-        <Mascot name="slime" mood="sad" size={120} message="Квестів поки немає... Вони з'являться незабаром!" />
+        <Mascot name={activeMascot as any} mood="sad" size={120} message="Квестів поки немає... Вони з'являться незабаром!" />
       </div>
     )
   }
@@ -97,7 +94,7 @@ export default function QuestMap({ challenges, completedIds, today, cuisine }: P
       {/* Header */}
       <div className="bg-gradient-to-br from-purple-600/20 to-violet-600/20 border border-purple-500/20 rounded-2xl p-5">
         <div className="flex items-center gap-3">
-          <Mascot name="cauldron" mood="happy" size={56} animation="idle" interactive={false} />
+          <Mascot name={activeMascot as any} mood="happy" size={56} animation="idle" interactive={false} />
           <div>
             <h1 className="text-lg font-extrabold text-white">Щоденні квести</h1>
             <p className="text-xs text-gray-400">
@@ -166,7 +163,6 @@ export default function QuestMap({ challenges, completedIds, today, cuisine }: P
           const isActive = isToday && !isCompleted
           const isLocked = !isToday && !isCompleted
           const pos = nodes[index]
-          const mascotName = NODE_MASCOTS[index % NODE_MASCOTS.length]
           const date = new Date(challenge.date)
           const dayLabel = date.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric' })
 
@@ -187,14 +183,14 @@ export default function QuestMap({ challenges, completedIds, today, cuisine }: P
                 <ActiveNode
                   challenge={challenge}
                   dayLabel={dayLabel}
-                  mascotName={mascotName}
+                  mascotName={activeMascot}
                   index={index}
                 />
               ) : (
                 <StaticNode
                   challenge={challenge}
                   dayLabel={dayLabel}
-                  mascotName={mascotName}
+                  mascotName={activeMascot}
                   isCompleted={isCompleted}
                   isLocked={isLocked}
                   index={index}

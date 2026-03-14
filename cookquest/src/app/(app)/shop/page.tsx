@@ -8,22 +8,36 @@ export default async function ShopPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('balance, active_mascot')
+    .select('balance, current_skin_id')
     .eq('id', user!.id)
     .single()
 
-  // Get list of mascots user already owns
-  const { data: ownedMascots } = await supabase
-    .from('user_mascots')
-    .select('mascot_key')
+  // Fetch mascot skins ordered by price
+  const { data: skins } = await supabase
+    .from('skins')
+    .select('*')
+    .order('price', { ascending: true })
+
+  // Fetch what user already owns
+  const { data: userSkins } = await supabase
+    .from('user_skins')
+    .select('skin_id')
     .eq('user_id', user!.id)
+
+  const ownedIds = new Set((userSkins || []).map(s => s.skin_id))
+
+  // Derive active mascot: find the emoji (mascot key) of the active skin
+  const activeSkin = (skins || []).find(s => s.id === profile?.current_skin_id)
+  const activeMascot = activeSkin?.emoji || DEFAULT_MASCOT
 
   return (
     <ShopContent
       userId={user!.id}
       balance={profile?.balance || 0}
-      activeMascot={profile?.active_mascot || DEFAULT_MASCOT}
-      ownedMascotKeys={(ownedMascots || []).map(m => m.mascot_key)}
+      activeSkinId={profile?.current_skin_id || null}
+      activeMascot={activeMascot}
+      skins={skins || []}
+      ownedSkinIds={Array.from(ownedIds)}
     />
   )
 }
