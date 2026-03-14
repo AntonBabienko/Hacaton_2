@@ -5,19 +5,24 @@ import { DEFAULT_MASCOT } from '@/lib/constants'
 
 const STORAGE_KEY = 'cq_mascot'
 
-interface MascotContextValue {
+interface AppContextValue {
   activeMascot: string
   setActiveMascot: (key: string) => void
+  balance: number
+  setBalance: (b: number | ((prev: number) => number)) => void
 }
 
-const MascotContext = createContext<MascotContextValue>({
+const AppContext = createContext<AppContextValue>({
   activeMascot: DEFAULT_MASCOT,
   setActiveMascot: () => {},
+  balance: 0,
+  setBalance: () => {},
 })
 
-export function MascotProvider({ mascot, children }: { mascot: string; children: React.ReactNode }) {
+export function MascotProvider({ mascot, balance: initialBalance, children }: { mascot: string; balance: number; children: React.ReactNode }) {
   // Always start with server value to avoid hydration mismatch
   const [activeMascot, setActiveMascotState] = useState(mascot)
+  const [balance, setBalance] = useState(initialBalance)
 
   // After hydration: read localStorage preference
   useEffect(() => {
@@ -31,16 +36,24 @@ export function MascotProvider({ mascot, children }: { mascot: string; children:
   }
 
   return (
-    <MascotContext.Provider value={{ activeMascot, setActiveMascot }}>
+    <AppContext.Provider value={{ activeMascot, setActiveMascot, balance, setBalance }}>
       {children}
-    </MascotContext.Provider>
+    </AppContext.Provider>
   )
 }
 
 export function useActiveMascot(): string {
-  return useContext(MascotContext).activeMascot
+  return useContext(AppContext).activeMascot
 }
 
 export function useSetActiveMascot(): (key: string) => void {
-  return useContext(MascotContext).setActiveMascot
+  return useContext(AppContext).setActiveMascot
+}
+
+export function useBalance(): number {
+  return useContext(AppContext).balance
+}
+
+export function useSetBalance(): (b: number | ((prev: number) => number)) => void {
+  return useContext(AppContext).setBalance
 }

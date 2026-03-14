@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 import {
   Home, ChefHat, Trophy, ShoppingBag, Target, Users, LogOut
 } from 'lucide-react'
-import { useActiveMascot } from '@/components/mascot-provider'
+import { useActiveMascot, useBalance } from '@/components/mascot-provider'
 
 interface NavbarProps {
   profile: User | null
@@ -20,6 +20,7 @@ export default function Navbar({ profile }: NavbarProps) {
   const router = useRouter()
   const supabase = createClient()
   const activeMascot = useActiveMascot()
+  const balance = useBalance()
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -49,7 +50,7 @@ export default function Navbar({ profile }: NavbarProps) {
               {profile && (
                 <div className="flex items-center gap-3 text-sm">
                   <div className="flex items-center gap-1 bg-yellow-500/10 text-yellow-400 px-2.5 py-1 rounded-full text-xs font-bold">
-                    <span>💰</span> {profile.balance}
+                    <span>💰</span> {balance}
                   </div>
                   <div className="flex items-center gap-1 bg-purple-500/10 text-purple-400 px-2.5 py-1 rounded-full text-xs font-bold">
                     <span>🏆</span> {profile.rating_score}

@@ -59,4 +59,32 @@ export const MASCOT_ITEMS = [
 
 export const DEFAULT_MASCOT = 'broccoli'
 
+// Dietary preferences
+export const DIET_OPTIONS = [
+  { key: 'none', label: 'Без обмежень', emoji: '🍽️' },
+  { key: 'vegetarian', label: 'Вегетаріанець', emoji: '🥬' },
+  { key: 'vegan', label: 'Веган', emoji: '🌱' },
+  { key: 'pescatarian', label: 'Пескетаріанець', emoji: '🐟' },
+  { key: 'keto', label: 'Кето', emoji: '🥑' },
+  { key: 'paleo', label: 'Палео', emoji: '🥩' },
+] as const
+
+export const ALLERGEN_OPTIONS = [
+  { key: 'gluten', label: 'Глютен', emoji: '🌾' },
+  { key: 'dairy', label: 'Молочні продукти', emoji: '🥛' },
+  { key: 'nuts', label: 'Горіхи', emoji: '🥜' },
+  { key: 'eggs', label: 'Яйця', emoji: '🥚' },
+  { key: 'soy', label: 'Соя', emoji: '🫘' },
+  { key: 'seafood', label: 'Морепродукти', emoji: '🦐' },
+  { key: 'lactose', label: 'Лактоза', emoji: '🧀' },
+  { key: 'honey', label: 'Мед', emoji: '🍯' },
+] as const
+
+export type DietaryPreferences = {
+  diet: string
+  allergens: string[]
+  dislikes: string[]
+  custom_note: string
+}
+
 export type MascotKey = typeof MASCOT_ITEMS[number]['key']

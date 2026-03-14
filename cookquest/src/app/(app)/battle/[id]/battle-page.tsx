@@ -274,8 +274,10 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
         </button>
         {ingredientsOpen && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {currentBattle.recipe.ingredients.map((ing: string, i: number) => (
-              <span key={i} className="bg-orange-500/10 text-orange-300 text-xs px-2 py-1 rounded-lg">{ing}</span>
+            {currentBattle.recipe.ingredients.map((ing: any, i: number) => (
+              <span key={i} className="bg-orange-500/10 text-orange-300 text-xs px-2 py-1 rounded-lg">
+                {typeof ing === 'string' ? ing : `${ing.amount ? ing.amount + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`}
+              </span>
             ))}
           </div>
         )}

@@ -7,11 +7,10 @@ import { cn } from '@/lib/utils'
 import { RARITY_COLORS, MASCOT_ITEMS, DEFAULT_MASCOT } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
-import { useActiveMascot, useSetActiveMascot } from '@/components/mascot-provider'
+import { useActiveMascot, useSetActiveMascot, useBalance, useSetBalance } from '@/components/mascot-provider'
 
 interface Props {
   userId: string
-  balance: number
   activeSkinId: string | null
   activeMascot: string
   skins: any[]
@@ -20,13 +19,13 @@ interface Props {
 
 export default function ShopContent({
   userId,
-  balance: initialBalance,
   activeSkinId: initialActiveSkinId,
   activeMascot: initialActiveMascot,
   skins,
   ownedSkinIds,
 }: Props) {
-  const [balance, setBalance] = useState(initialBalance)
+  const balance = useBalance()
+  const setBalance = useSetBalance()
   const [owned, setOwned] = useState<Set<string>>(new Set(ownedSkinIds))
   const [activeSkinId, setActiveSkinId] = useState(initialActiveSkinId)
   const activeMascot = useActiveMascot()

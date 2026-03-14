@@ -33,7 +33,6 @@ export default async function ShopPage() {
   return (
     <ShopContent
       userId={user!.id}
-      balance={profile?.balance || 0}
       activeSkinId={profile?.current_skin_id || null}
       activeMascot={activeMascot}
       skins={skins || []}

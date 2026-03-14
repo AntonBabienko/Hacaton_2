@@ -191,9 +191,9 @@ function GenerateContent() {
               </button>
               {expandedIngredients.has(i) && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
-                  {recipe.ingredients.map((ing, j) => (
+                  {recipe.ingredients.map((ing: any, j: number) => (
                     <span key={j} className="bg-white/5 text-gray-300 text-xs px-2 py-1 rounded-lg">
-                      {ing}
+                      {typeof ing === 'string' ? ing : `${ing.amount ? ing.amount + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`}
                     </span>
                   ))}
                 </div>
@@ -225,9 +225,9 @@ function GenerateContent() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {ingredients.map(ing => (
+          {[...new Set(ingredients)].map((ing, i) => (
             <button
-              key={ing}
+              key={`${ing}-${i}`}
               onClick={() => toggleExclude(ing)}
               className={cn(
                 'px-3 py-1.5 rounded-xl text-sm font-bold transition-all border',

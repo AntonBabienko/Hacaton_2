@@ -120,9 +120,9 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
         </button>
         {ingredientsOpen && (
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {recipe.ingredients.map((ing: string, i: number) => (
+            {recipe.ingredients.map((ing: any, i: number) => (
               <span key={i} className="bg-orange-500/10 text-orange-300 text-xs px-2 py-1 rounded-lg">
-                {ing}
+                {typeof ing === 'string' ? ing : `${ing.amount ? ing.amount + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`}
               </span>
             ))}
           </div>

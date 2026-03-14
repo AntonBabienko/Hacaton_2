@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Download, BookOpen, Zap } from 'lucide-react'
+import { Download, BookOpen, Zap, Settings, X, Plus } from 'lucide-react'
 import { getLevelInfo, getXpProgress } from '@/lib/utils'
-import { DIFFICULTY_LABELS, DIFFICULTY_COLORS, MASCOT_ITEMS } from '@/lib/constants'
+import { DIFFICULTY_LABELS, DIFFICULTY_COLORS, MASCOT_ITEMS, DIET_OPTIONS, ALLERGEN_OPTIONS, type DietaryPreferences } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -16,9 +16,17 @@ interface Props {
 }
 
 export default function ProfileContent({ profile, savedRecipes }: Props) {
-  // activeMascot comes from props — profile.active_skin_emoji is resolved server-side
   const [activeMascot, setActiveMascot] = useState(profile?.active_skin_emoji || 'broccoli')
   const supabase = createClient()
+
+  // Dietary preferences state
+  const prefs: DietaryPreferences = profile?.dietary_preferences || { diet: 'none', allergens: [], dislikes: [], custom_note: '' }
+  const [diet, setDiet] = useState(prefs.diet || 'none')
+  const [allergens, setAllergens] = useState<string[]>(prefs.allergens || [])
+  const [dislikes, setDislikes] = useState<string[]>(prefs.dislikes || [])
+  const [customNote, setCustomNote] = useState(prefs.custom_note || '')
+  const [dislikeInput, setDislikeInput] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const levelInfo = getLevelInfo(profile?.xp || 0)
   const xpProgress = getXpProgress(profile?.xp || 0)
@@ -28,7 +36,41 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
   const circumference = 2 * Math.PI * radius
   const dashOffset = circumference - (xpProgress / 100) * circumference
 
-  // Mascot changes happen in the Shop — this is display only
+  async function savePreferences() {
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          dietary_preferences: {
+            diet,
+            allergens,
+            dislikes,
+            custom_note: customNote.trim(),
+          },
+        })
+        .eq('id', profile.id)
+      if (error) { toast.error('Помилка збереження'); return }
+      toast.success('Налаштування збережено!')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function toggleAllergen(key: string) {
+    setAllergens(prev => prev.includes(key) ? prev.filter(a => a !== key) : [...prev, key])
+  }
+
+  function addDislike() {
+    const val = dislikeInput.trim()
+    if (!val || dislikes.includes(val)) return
+    setDislikes(prev => [...prev, val])
+    setDislikeInput('')
+  }
+
+  function removeDislike(item: string) {
+    setDislikes(prev => prev.filter(d => d !== item))
+  }
 
   async function exportRecipePDF(recipe: any) {
     const { jsPDF } = await import('jspdf')
@@ -56,9 +98,10 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
     doc.text('Інгредієнти:', 20, y)
     doc.setFontSize(11)
     y += 10
-    recipe.ingredients.forEach((ing: string) => {
+    recipe.ingredients.forEach((ing: any) => {
       y = checkPage(y, 7)
-      doc.text(`• ${ing}`, 25, y)
+      const label = typeof ing === 'string' ? ing : `${ing.amount ? ing.amount + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`
+      doc.text(`• ${label}`, 25, y)
       y += 7
     })
 
@@ -216,6 +259,115 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Dietary preferences */}
+      <div className="bg-[#1a1a2e] rounded-2xl border border-white/5 p-5">
+        <h2 className="font-bold text-white mb-4 flex items-center gap-2">
+          <Settings size={18} className="text-green-400" />
+          Кулінарні вподобання
+        </h2>
+
+        {/* Diet type */}
+        <div className="mb-4">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Тип харчування</p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {DIET_OPTIONS.map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setDiet(opt.key)}
+                className={cn(
+                  'px-2 py-2 rounded-xl text-xs font-bold transition-all text-center',
+                  diet === opt.key
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                    : 'bg-white/5 text-gray-400 border border-white/5 hover:bg-white/10'
+                )}
+              >
+                <span className="block text-base mb-0.5">{opt.emoji}</span>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Allergens */}
+        <div className="mb-4">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Алергени</p>
+          <div className="flex flex-wrap gap-1.5">
+            {ALLERGEN_OPTIONS.map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => toggleAllergen(opt.key)}
+                className={cn(
+                  'px-3 py-1.5 rounded-full text-xs font-bold transition-all',
+                  allergens.includes(opt.key)
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    : 'bg-white/5 text-gray-400 border border-white/5 hover:bg-white/10'
+                )}
+              >
+                {opt.emoji} {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Dislikes */}
+        <div className="mb-4">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Не люблю (продукти)</p>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={dislikeInput}
+              onChange={e => setDislikeInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addDislike()}
+              placeholder="Наприклад: кінза, гриби..."
+              className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50"
+            />
+            <button
+              onClick={addDislike}
+              className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-400 transition-colors"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+          {dislikes.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {dislikes.map(item => (
+                <span
+                  key={item}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-orange-500/10 text-orange-400 rounded-full text-xs font-bold"
+                >
+                  {item}
+                  <button onClick={() => removeDislike(item)} className="hover:text-orange-300">
+                    <X size={12} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Custom note */}
+        <div className="mb-4">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Додаткові побажання</p>
+          <textarea
+            value={customNote}
+            onChange={e => setCustomNote(e.target.value)}
+            placeholder="Наприклад: без гострого, мало солі..."
+            rows={2}
+            maxLength={200}
+            className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 resize-none"
+          />
+        </div>
+
+        {/* Save button */}
+        <button
+          onClick={savePreferences}
+          disabled={saving}
+          className="w-full bg-green-500 hover:bg-green-400 disabled:bg-green-500/50 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+        >
+          {saving ? 'Зберігаю...' : 'Зберегти вподобання'}
+        </button>
       </div>
     </div>
   )

@@ -29,7 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-[#0f0f23]">
-      <MascotProvider mascot={activeMascot}>
+      <MascotProvider mascot={activeMascot} balance={profile?.balance ?? 0}>
         <Navbar profile={profile} activeMascot={activeMascot} />
         <main className="max-w-lg mx-auto px-4 py-4 pb-nav">
           {children}

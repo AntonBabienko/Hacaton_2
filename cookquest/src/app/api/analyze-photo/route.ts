@@ -17,50 +17,62 @@ const SYSTEM_PROMPT = `Ти — помічник кухаря у додатку 
 Приклад відповіді: ["помідори", "яйця", "сир", "молоко"]`
 
 export async function POST(req: Request) {
-  const formData = await req.formData()
-  const files = formData.getAll('photos') as File[]
+  try {
+    const formData = await req.formData()
+    const files = formData.getAll('photos') as File[]
 
-  if (!files.length) {
-    return Response.json({ error: 'No photos provided' }, { status: 400 })
-  }
+    if (!files.length) {
+      return Response.json({ error: 'No photos provided' }, { status: 400 })
+    }
 
-  if (files.length > 5) {
-    return Response.json({ error: 'Too many photos (max 5)' }, { status: 400 })
-  }
+    if (files.length > 5) {
+      return Response.json({ error: 'Too many photos (max 5)' }, { status: 400 })
+    }
 
-  const imageContents = await Promise.all(
-    files.map(async (file) => {
-      const buffer = await file.arrayBuffer()
-      const base64 = Buffer.from(buffer).toString('base64')
-      const mimeType = file.type as 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
-      return {
-        type: 'image' as const,
-        image: `data:${mimeType};base64,${base64}`,
-      }
+    // ВИПРАВЛЕННЯ: Тепер ми передаємо сирі байти (Uint8Array),
+    // щоб AI SDK не намагався "завантажувати" картинку з інтернету
+    const imageContents = await Promise.all(
+      files.map(async (file) => {
+        const buffer = await file.arrayBuffer()
+        return {
+          type: 'image' as const,
+          image: new Uint8Array(buffer),
+        }
+      })
+    )
+
+    const { text } = await generateText({
+      model: groq(GROQ_VISION_MODEL),
+      messages: [
+        {
+          role: 'system',
+          content: SYSTEM_PROMPT,
+        },
+        {
+          role: 'user',
+          content: [
+            ...imageContents,
+            {
+              type: 'text',
+              text: 'Визнач усі продукти харчування на цих фото. Поверни JSON масив.',
+            },
+          ],
+        },
+      ],
     })
-  )
 
-  const { text } = await generateText({
-    model: groq(GROQ_VISION_MODEL),
-    messages: [
-      {
-        role: 'system',
-        content: SYSTEM_PROMPT,
-      },
-      {
-        role: 'user',
-        content: [
-          ...imageContents,
-          {
-            type: 'text',
-            text: 'Визнач усі продукти харчування на цих фото. Поверни JSON масив.',
-          },
-        ],
-      },
-    ],
-  })
+    const raw = extractJSON<string[]>(text, 'array')
+    const ingredients = validateIngredients(raw)
 
-  const raw = extractJSON<string[]>(text, 'array')
-  const ingredients = validateIngredients(raw)
-  return Response.json({ ingredients })
+    return Response.json({ ingredients })
+
+  } catch (error) {
+    // Додав перехоплення помилок, щоб у разі чого сервер не "падав" мовчки,
+    // а чітко писав проблему в консоль VS Code
+    console.error('Помилка API аналізу фото:', error)
+    return Response.json(
+      { error: 'Внутрішня помилка сервера при обробці фото' },
+      { status: 500 }
+    )
+  }
 }

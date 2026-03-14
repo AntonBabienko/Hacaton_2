@@ -20,45 +20,51 @@ const SYSTEM_PROMPT = `Ти — суддя кулінарних батлів у 
 - comment: 1 речення українською`
 
 export async function POST(req: Request) {
-  const formData = await req.formData()
-  const photo = formData.get('photo') as File
-  const recipeName = sanitizeText(formData.get('recipeName') as string || '')
-  const recipePoints = parseInt(formData.get('recipePoints') as string) || 100
-  const timeSeconds = parseInt(formData.get('timeSeconds') as string) || 0
+  try {
+    const formData = await req.formData()
+    const photo = formData.get('photo') as File
+    const recipeName = sanitizeText(formData.get('recipeName') as string || '')
+    const recipePoints = parseInt(formData.get('recipePoints') as string) || 100
+    const timeSeconds = parseInt(formData.get('timeSeconds') as string) || 0
 
-  if (!photo) {
-    return Response.json({ quality: 50, comment: 'Фото не надано', totalPool: Math.round(recipePoints * BATTLE_MULTIPLIER) }, { status: 400 })
+    if (!photo) {
+      return Response.json({ quality: 50, comment: 'Фото не надано', totalPool: Math.round(recipePoints * BATTLE_MULTIPLIER) }, { status: 400 })
+    }
+
+    const buffer = await photo.arrayBuffer()
+    const context = `Страва: ${recipeName}\nЧас приготування: ${Math.floor(timeSeconds / 60)} хв ${timeSeconds % 60} сек`
+
+    const { text } = await generateText({
+      model: groq(GROQ_VISION_MODEL),
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        {
+          role: 'user',
+          content: [
+            // ВИПРАВЛЕННЯ: Передаємо масив байтів замість Base64 рядка
+            { type: 'image', image: new Uint8Array(buffer) },
+            {
+              type: 'text',
+              text: `Оціни готову страву:\n\n${wrapUserData('dish_context', context)}`,
+            },
+          ],
+        },
+      ],
+    })
+
+    const raw = extractJSON<any>(text, 'object')
+    const result = validateBattleEval(raw)
+
+    return Response.json({
+      quality: result.quality,
+      comment: result.comment,
+      totalPool: Math.round(recipePoints * BATTLE_MULTIPLIER),
+    })
+  } catch (error) {
+    console.error('Помилка API оцінки батлу:', error)
+    return Response.json(
+      { error: 'Внутрішня помилка сервера при оцінці страви' },
+      { status: 500 }
+    )
   }
-
-  const buffer = await photo.arrayBuffer()
-  const base64 = Buffer.from(buffer).toString('base64')
-  const mimeType = photo.type as 'image/jpeg' | 'image/png' | 'image/webp'
-
-  const context = `Страва: ${recipeName}\nЧас приготування: ${Math.floor(timeSeconds / 60)} хв ${timeSeconds % 60} сек`
-
-  const { text } = await generateText({
-    model: groq(GROQ_VISION_MODEL),
-    messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      {
-        role: 'user',
-        content: [
-          { type: 'image', image: `data:${mimeType};base64,${base64}` },
-          {
-            type: 'text',
-            text: `Оціни готову страву:\n\n${wrapUserData('dish_context', context)}`,
-          },
-        ],
-      },
-    ],
-  })
-
-  const raw = extractJSON<any>(text, 'object')
-  const result = validateBattleEval(raw)
-
-  return Response.json({
-    quality: result.quality,
-    comment: result.comment,
-    totalPool: Math.round(recipePoints * BATTLE_MULTIPLIER),
-  })
 }
