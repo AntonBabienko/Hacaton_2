@@ -75,34 +75,52 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
   async function exportRecipePDF(recipe: any) {
     const { jsPDF } = await import('jspdf')
     const doc = new jsPDF()
+
+    // Load and register custom font for Cyrillic support
+    const response = await fetch('/fonts/Roboto-Regular.ttf')
+    const blob = await response.blob()
+    const base64Font = await new Promise<string>((resolve) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve((reader.result as string).split(',')[1])
+      reader.readAsDataURL(blob)
+    })
+
+    doc.addFileToVFS('Roboto-Regular.ttf', base64Font)
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal')
+    doc.setFont('Roboto')
+
     const pageH = doc.internal.pageSize.getHeight()
 
     function checkPage(y: number, needed = 10): number {
       if (y + needed > pageH - 15) {
         doc.addPage()
+        doc.setFont('Roboto')
         return 20
       }
       return y
     }
 
     doc.setFontSize(20)
-    doc.text(recipe.name, 20, 20)
+    doc.text(recipe.name, 20, 20, { maxWidth: 170 })
 
     doc.setFontSize(12)
     doc.text(`Складність: ${DIFFICULTY_LABELS[recipe.difficulty as keyof typeof DIFFICULTY_LABELS]}`, 20, 35)
     doc.text(`Кухня: ${recipe.cuisine_type}`, 20, 45)
-    doc.text(recipe.description, 20, 55, { maxWidth: 170 })
+    doc.text(recipe.description || '', 20, 55, { maxWidth: 170 })
 
-    let y = 75
+    let y = 85 // Shifted down a bit to accommodate possible long descriptions
     doc.setFontSize(14)
     doc.text('Інгредієнти:', 20, y)
     doc.setFontSize(11)
     y += 10
     recipe.ingredients.forEach((ing: any) => {
-      y = checkPage(y, 7)
       const label = typeof ing === 'string' ? ing : `${ing.amount ? ing.amount + ' ' : ''}${ing.unit ? ing.unit + ' ' : ''}${ing.name}`
-      doc.text(`• ${label}`, 25, y)
-      y += 7
+      const lines = doc.splitTextToSize(`• ${label}`, 165)
+      lines.forEach((line: string) => {
+        y = checkPage(y, 7)
+        doc.text(line, 25, y)
+        y += 7
+      })
     })
 
     y = checkPage(y + 5, 20)
@@ -112,8 +130,8 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
     y += 10
     recipe.instructions.forEach((step: any) => {
       y = checkPage(y, 18)
-      doc.text(`${step.step}. ${step.title}`, 20, y)
-      y += 6
+      doc.text(`${step.step}. ${step.title}`, 20, y, { maxWidth: 170 })
+      y += 8
       doc.setFontSize(9)
       const lines = doc.splitTextToSize(step.description, 165)
       lines.forEach((line: string) => {
@@ -122,7 +140,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
         y += 5
       })
       doc.setFontSize(11)
-      y += 3
+      y += 5
     })
 
     doc.save(`${recipe.name}.pdf`)

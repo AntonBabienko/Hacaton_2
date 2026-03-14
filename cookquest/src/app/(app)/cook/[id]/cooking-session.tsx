@@ -4,8 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Camera, Check, Clock } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { formatTime } from '@/lib/utils'
+import { cn, formatTime, compressImage } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
 import { useActiveMascot } from '@/components/mascot-provider'
@@ -51,8 +50,11 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
     if (step.requires_photo) {
       setEvaluating(true)
       try {
+        const compressedBlob = await compressImage(file)
+        const compressedFile = new File([compressedBlob], 'photo.jpg', { type: 'image/jpeg' })
+
         const formData = new FormData()
-        formData.append('photo', file)
+        formData.append('photo', compressedFile)
         formData.append('stepTitle', step.title)
         formData.append('stepDescription', step.description)
         formData.append('recipeName', recipe.name)
@@ -100,31 +102,30 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
       const completedBonus = Array.from(completedSteps).filter(
         i => recipe.instructions[i]?.requires_photo
       ).length
-      const bonusPoints = Math.floor(effectivePoints * 0.1 * completedBonus)
-      const totalPoints = effectivePoints + bonusPoints
+      
+      // Ensure we have integers for all point calculations
+      const points = Math.round(effectivePoints)
+      const bonusPoints = Math.round(points * 0.1 * completedBonus)
+      const totalPoints = points + bonusPoints
 
-      await supabase.from('cooking_sessions').update({
-        finished_at: new Date().toISOString(),
-        points_earned: totalPoints,
-      }).eq('id', session.id)
+      console.log('Finishing cooking session', { totalPoints, userId, sessionId: session.id })
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('balance, xp, rating_score, level')
-        .eq('id', userId)
-        .single()
+      // Use the secure RPC to update everything in one transaction
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('complete_cooking_session', {
+        p_session_id: session.id,
+        p_user_id: userId,
+        p_points_earned: totalPoints
+      })
 
-      if (profile) {
-        const newXp = (profile.xp || 0) + totalPoints
-        const newLevel = getLevel(newXp)
-        await supabase.from('profiles').update({
-          balance: (profile.balance || 0) + totalPoints,
-          xp: newXp,
-          rating_score: (profile.rating_score || 0) + totalPoints,
-          level: newLevel,
-        }).eq('id', userId)
+      if (rpcError) {
+        console.error('RPC Error:', rpcError)
+        toast.error('Помилка збереження результатів')
+        return
       }
 
+      toast.success(`+${totalPoints} XP!`)
+
+      // Update recipe cook count
       const { data: saved } = await supabase
         .from('user_saved_recipes')
         .select('id, cook_count')
@@ -134,14 +135,14 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
 
       if (saved) {
         await supabase.from('user_saved_recipes')
-          .update({ cook_count: saved.cook_count + 1 })
+          .update({ cook_count: (saved.cook_count || 0) + 1 })
           .eq('id', saved.id)
       }
 
-      toast.success(`+${totalPoints} XP!`)
       router.push('/')
-    } catch {
-      toast.error('Помилка збереження')
+    } catch (e: any) {
+      console.error('Finish cooking exception:', e)
+      toast.error('Системна помилка збереження: ' + (e.message || 'Невідомо'))
     } finally {
       setFinishing(false)
     }

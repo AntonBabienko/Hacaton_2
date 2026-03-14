@@ -184,11 +184,13 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
             <select
               value={selectedFriend}
               onChange={e => setSelectedFriend(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+              className="w-full px-4 py-2.5 bg-[#1a1a2e] border border-white/10 rounded-xl text-white mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
             >
-              <option value="">Оберіть друга</option>
+              <option value="" className="bg-[#1a1a2e]">Оберіть друга</option>
               {friends.map((f: any) => (
-                <option key={f.id} value={f.friend?.id}>{f.friend?.username}</option>
+                <option key={f.id} value={f.friend?.id} className="bg-[#1a1a2e]">
+                  {f.friend?.username}
+                </option>
               ))}
             </select>
             <div className="grid grid-cols-2 gap-3">

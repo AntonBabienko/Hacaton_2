@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useRef, Suspense } from 'react'
+import { useState, useRef, Suspense, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Camera, Shuffle, X, Upload, ChevronDown, ChevronUp } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
+import { cn, compressImage } from '@/lib/utils'
 import { GeneratedRecipe } from '@/types'
 import { DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
@@ -20,7 +21,14 @@ function GenerateContent() {
   const [mode, setMode] = useState<'photo' | 'random'>(initialMode)
   const [photos, setPhotos] = useState<File[]>([])
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
-  const [prompt, setPrompt] = useState('')
+  
+  // Clean prompt for the UI (if user wants to edit)
+  const [prompt, setPrompt] = useState(searchParams.get('challengeDescription') || '')
+  
+  // Hidden system context from the URL
+  const challengeCuisine = searchParams.get('cuisine')
+  const challengeDescription = searchParams.get('challengeDescription')
+
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState<'input' | 'ingredients' | 'recipes'>('input')
   const [ingredients, setIngredients] = useState<string[]>([])
@@ -30,14 +38,29 @@ function GenerateContent() {
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
-  function addPhoto(file: File) {
+  // Auto-generate if coming from a specific challenge
+  useEffect(() => {
+    if (initialMode === 'random' && challengeDescription) {
+      generateRandom()
+    }
+  }, [])
+
+  async function addPhoto(file: File) {
     if (photos.length >= 3) {
       toast.error('Максимум 3 фото')
       return
     }
-    setPhotos(prev => [...prev, file])
-    const url = URL.createObjectURL(file)
-    setPhotoPreviews(prev => [...prev, url])
+    
+    try {
+      const compressedBlob = await compressImage(file)
+      const compressedFile = new File([compressedBlob], file.name, { type: 'image/jpeg' })
+      
+      setPhotos(prev => [...prev, compressedFile])
+      const url = URL.createObjectURL(compressedFile)
+      setPhotoPreviews(prev => [...prev, url])
+    } catch {
+      toast.error('Помилка обробки фото')
+    }
   }
 
   function removePhoto(index: number) {
@@ -108,7 +131,10 @@ function GenerateContent() {
       const res = await fetch('/api/generate-random-recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          prompt: prompt || challengeDescription || 'будь-що смачне',
+          challengeCuisine 
+        }),
       })
       const data = await res.json()
       if (!data.recipes?.length) {
@@ -159,6 +185,25 @@ function GenerateContent() {
       else next.add(index)
       return next
     })
+  }
+
+  if (loading && challengeDescription && step === 'input') {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-6">
+        <Mascot 
+          name={activeMascot as any} 
+          mood="happy" 
+          size={120} 
+          message="Готую найкращі рецепти для твого квесту..." 
+          animation="bounce" 
+        />
+        <div className="flex gap-2">
+          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-3 h-3 bg-orange-500 rounded-full" />
+          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="w-3 h-3 bg-orange-500 rounded-full" />
+          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="w-3 h-3 bg-orange-500 rounded-full" />
+        </div>
+      </div>
+    )
   }
 
   // STEP: RECIPES

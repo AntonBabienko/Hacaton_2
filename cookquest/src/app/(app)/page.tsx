@@ -33,7 +33,7 @@ export default async function HomePage() {
     .eq('user_id', user!.id)
 
   const { data: savedRecipes } = await supabase
-    .from('saved_recipes')
+    .from('user_saved_recipes')
     .select('id')
     .eq('user_id', user!.id)
 

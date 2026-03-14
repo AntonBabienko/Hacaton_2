@@ -162,10 +162,10 @@ export interface RecipeIngredient {
 }
 
 export interface RecipeStep {
-  stepNumber: number
-  text: string
-  isCheckpoint: boolean
-  checkpointLabel: string | null
+  step: number
+  title: string
+  description: string
+  requires_photo: boolean
 }
 
 export interface RecipeOutput {
@@ -174,8 +174,8 @@ export interface RecipeOutput {
   difficulty: 'easy' | 'medium' | 'hard'
   points: number
   ingredients: RecipeIngredient[]
-  steps: RecipeStep[]
-  cuisine: string
+  instructions: RecipeStep[]
+  cuisine_type: string
   cookingTimeMinutes: number
 }
 
@@ -192,13 +192,18 @@ function validateIngredient(raw: any): RecipeIngredient | null {
 
 function validateStep(raw: any, index: number): RecipeStep | null {
   if (!raw || typeof raw !== 'object') return null
-  const text = clampString(raw.text ?? raw.description ?? '', STEP_TEXT_MAX)
-  if (!text || isSuspicious(text)) return null
+  const description = clampString(raw.text ?? raw.description ?? '', STEP_TEXT_MAX)
+  if (!description || isSuspicious(description)) return null
+
+  // Map AI fields to app fields
+  const title = clampString(raw.checkpointLabel ?? raw.title ?? description.split('.')[0], 80)
+  const requires_photo = Boolean(raw.isCheckpoint ?? raw.requires_photo)
+
   return {
-    stepNumber: index + 1,
-    text,
-    isCheckpoint: raw.isCheckpoint === true,
-    checkpointLabel: raw.isCheckpoint ? clampString(raw.checkpointLabel ?? '', 80) : null,
+    step: index + 1,
+    title,
+    description,
+    requires_photo,
   }
 }
 
@@ -230,23 +235,11 @@ function validateSingleRecipe(raw: any): { valid: boolean; recipe?: RecipeOutput
 
   // Steps — support both old format and new
   const rawSteps = Array.isArray(raw.steps ?? raw.instructions) ? (raw.steps ?? raw.instructions) : []
-  let steps: RecipeStep[]
+  const instructions = rawSteps.slice(0, STEPS_MAX).map((s: any, i: number) => validateStep(s, i)).filter(Boolean) as RecipeStep[]
 
-  if (rawSteps.length > 0 && rawSteps[0]?.title !== undefined && rawSteps[0]?.text === undefined) {
-    // Old CookQuest format: { step, title, description, requires_photo }
-    steps = rawSteps.slice(0, STEPS_MAX).map((s: any, i: number) => ({
-      stepNumber: typeof s.step === 'number' ? s.step : i + 1,
-      text: clampString(s.description ?? s.title ?? '', STEP_TEXT_MAX),
-      isCheckpoint: Boolean(s.requires_photo ?? s.isCheckpoint),
-      checkpointLabel: s.checkpointLabel ? clampString(s.checkpointLabel, 80) : (s.title ? clampString(s.title, 80) : null),
-    })).filter((s: RecipeStep) => s.text.length > 0)
-  } else {
-    // axiba12 format: { text, isCheckpoint, checkpointLabel }
-    steps = rawSteps.slice(0, STEPS_MAX).map((s: any, i: number) => validateStep(s, i)).filter(Boolean) as RecipeStep[]
-  }
-  if (steps.length === 0) return { valid: false, reason: 'no_steps' }
+  if (instructions.length === 0) return { valid: false, reason: 'no_steps' }
 
-  const cuisine = clampString(raw.cuisine ?? raw.cuisine_type ?? '', 50)
+  const cuisine_type = clampString(raw.cuisine ?? raw.cuisine_type ?? '', 50)
 
   return {
     valid: true,
@@ -256,8 +249,8 @@ function validateSingleRecipe(raw: any): { valid: boolean; recipe?: RecipeOutput
       difficulty,
       points,
       ingredients,
-      steps,
-      cuisine,
+      instructions,
+      cuisine_type,
       cookingTimeMinutes: clampNumber(raw.cookingTimeMinutes ?? raw.time ?? 30, 1, 600, 30),
     },
   }

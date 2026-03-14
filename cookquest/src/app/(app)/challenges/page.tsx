@@ -1,13 +1,22 @@
 import { createClient } from '@/lib/supabase/server'
-import { getCurrentCuisine, getTodayDate } from '@/lib/utils'
+import { getTodayDate } from '@/lib/utils'
+import { CUISINES_SCHEDULE } from '@/lib/constants'
+import { generateQuests } from '@/lib/challenges'
 import QuestMap from './quest-map'
 
-/** Monday of the current week (YYYY-MM-DD) */
-function getWeekStart(today: string): string {
-  const d = new Date(today)
+/** Get Monday of the week containing the given date */
+function getWeekStart(date: string | Date): string {
+  const d = new Date(date)
   const day = d.getDay() // 0=Sun
   const diff = day === 0 ? -6 : 1 - day // offset to Monday
   d.setDate(d.getDate() + diff)
+  return d.toISOString().split('T')[0]
+}
+
+/** Get Monday of the next week */
+function getNextWeekStart(currentWeekStart: string): string {
+  const d = new Date(currentWeekStart)
+  d.setDate(d.getDate() + 7)
   return d.toISOString().split('T')[0]
 }
 
@@ -28,49 +37,72 @@ export default async function ChallengesPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const today = getTodayDate()
-  const cuisine = getCurrentCuisine()
   const weekStart = getWeekStart(today)
+  const nextWeekStart = getNextWeekStart(weekStart)
+  
   const weekDates = getWeekDates(weekStart)
+  const nextWeekDates = getWeekDates(nextWeekStart)
+  
+  const allDates = [...weekDates, ...nextWeekDates]
 
-  // Fetch challenges for this week
+  // Fetch challenges for current and next week
   let { data: challenges } = await supabase
     .from('challenges')
     .select('*')
     .gte('date', weekStart)
-    .lte('date', weekDates[6])
+    .lte('date', allDates[allDates.length - 1])
     .order('date', { ascending: true })
 
-  // If no challenges this week — generate via AI and save to DB
-  if (!challenges || challenges.length === 0) {
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const res = await fetch(`${baseUrl}/api/generate-quests`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cuisine, startDate: weekStart }),
-      })
+  // Ensure we have challenges for both weeks
+  const ensureWeekQuests = async (startDate: string, dates: string[]) => {
+    const weekQuests = (challenges || []).filter(c => dates.includes(c.date))
+    if (weekQuests.length < 7) {
+      try {
+        const d = new Date(startDate)
+        const weekNumber = Math.floor(d.getTime() / (7 * 24 * 60 * 60 * 1000))
+        const weekCuisine = CUISINES_SCHEDULE[weekNumber % CUISINES_SCHEDULE.length]
+        
+        const quests = await generateQuests(weekCuisine, startDate)
 
-      if (res.ok) {
-        const { quests } = await res.json()
         if (quests?.length > 0) {
-          const rows = quests.map((q: any, i: number) => ({
-            date: weekDates[i] || weekDates[weekDates.length - 1],
+          // Only insert for missing dates
+          const existingDates = weekQuests.map(q => q.date)
+          const missingDates = dates.filter(d => !existingDates.includes(d))
+          
+          const rows = quests.slice(0, missingDates.length).map((q: any, i: number) => ({
+            date: missingDates[i],
             description: q.description,
             bonus_points: q.bonus_points,
-            cuisine_type: cuisine,
+            cuisine_type: weekCuisine,
           }))
 
-          const { data: inserted } = await supabase
-            .from('challenges')
-            .insert(rows)
-            .select()
-
-          challenges = inserted || []
+          if (rows.length > 0) {
+            const { data: inserted } = await supabase
+              .from('challenges')
+              .insert(rows)
+              .select()
+            return inserted || []
+          }
         }
+      } catch (err) {
+        console.error('Помилка автогенерації квестів:', err)
       }
-    } catch (err) {
-      console.error('Помилка автогенерації квестів:', err)
     }
+    return []
+  }
+
+  const newCurrent = await ensureWeekQuests(weekStart, weekDates)
+  const newNext = await ensureWeekQuests(nextWeekStart, nextWeekDates)
+
+  if (newCurrent.length > 0 || newNext.length > 0) {
+    // Refresh challenges
+    const { data: refreshed } = await supabase
+      .from('challenges')
+      .select('*')
+      .gte('date', weekStart)
+      .lte('date', allDates[allDates.length - 1])
+      .order('date', { ascending: true })
+    challenges = refreshed || []
   }
 
   const { data: completions } = await supabase
@@ -85,7 +117,6 @@ export default async function ChallengesPage() {
       challenges={challenges || []}
       completedIds={completedIds}
       today={today}
-      cuisine={cuisine}
     />
   )
 }

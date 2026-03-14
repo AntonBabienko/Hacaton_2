@@ -38,3 +38,34 @@ export function getTodayChallengeCuisine(): string {
 export function getTodayDate(): string {
   return new Date().toISOString().split('T')[0]
 }
+
+export async function compressImage(file: File, maxWidth = 800, quality = 0.6): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.src = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(img.src)
+      const canvas = document.createElement('canvas')
+      let width = img.width
+      let height = img.height
+
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width
+        width = maxWidth
+      } else if (height > maxWidth) {
+        width = (width * maxWidth) / height
+        height = maxWidth
+      }
+
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      ctx?.drawImage(img, 0, 0, width, height)
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob)
+        else reject(new Error('Canvas toBlob failed'))
+      }, 'image/jpeg', quality)
+    }
+    img.onerror = reject
+  })
+}

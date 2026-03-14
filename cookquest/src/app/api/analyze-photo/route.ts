@@ -29,14 +29,15 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Too many photos (max 5)' }, { status: 400 })
     }
 
-    // ВИПРАВЛЕННЯ: Тепер ми передаємо сирі байти (Uint8Array),
-    // щоб AI SDK не намагався "завантажувати" картинку з інтернету
+    // ВИПРАВЛЕННЯ: Тепер ми передаємо Data URL (base64)
     const imageContents = await Promise.all(
       files.map(async (file) => {
         const buffer = await file.arrayBuffer()
+        const base64 = Buffer.from(buffer).toString('base64')
+        const dataUrl = `data:${file.type || 'image/jpeg'};base64,${base64}`
         return {
           type: 'image' as const,
-          image: new Uint8Array(buffer),
+          image: dataUrl,
         }
       })
     )

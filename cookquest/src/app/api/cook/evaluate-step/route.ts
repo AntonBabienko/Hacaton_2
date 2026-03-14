@@ -49,6 +49,8 @@ export async function POST(req: Request) {
     }
 
     const buffer = await photo.arrayBuffer()
+    const base64 = Buffer.from(buffer).toString('base64')
+    const dataUrl = `data:${photo.type || 'image/jpeg'};base64,${base64}`
 
     const contextText = `РЕЦЕПТ: ${recipeName}
 КРОК №: ${stepNumber}
@@ -65,7 +67,7 @@ export async function POST(req: Request) {
         {
           role: 'user',
           content: [
-            { type: 'image', image: new Uint8Array(buffer) },
+            { type: 'image', image: dataUrl },
             { type: 'text', text: contextText },
           ],
         },

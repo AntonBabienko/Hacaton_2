@@ -34,6 +34,11 @@ export async function POST(req: Request) {
     const buffer = await photo.arrayBuffer()
     const context = `Страва: ${recipeName}\nЧас приготування: ${Math.floor(timeSeconds / 60)} хв ${timeSeconds % 60} сек`
 
+    console.log(`[API Battle] Evaluate photo: ${photo.name}, size: ${buffer.byteLength} bytes, type: ${photo.type}`)
+
+    const base64 = Buffer.from(buffer).toString('base64')
+    const dataUrl = `data:${photo.type || 'image/jpeg'};base64,${base64}`
+
     const { text } = await generateText({
       model: groq(GROQ_VISION_MODEL),
       messages: [
@@ -41,8 +46,10 @@ export async function POST(req: Request) {
         {
           role: 'user',
           content: [
-            // ВИПРАВЛЕННЯ: Передаємо масив байтів замість Base64 рядка
-            { type: 'image', image: new Uint8Array(buffer) },
+            { 
+              type: 'image', 
+              image: dataUrl 
+            },
             {
               type: 'text',
               text: `Оціни готову страву:\n\n${wrapUserData('dish_context', context)}`,

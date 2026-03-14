@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Clock, ChevronDown, ChevronUp, Swords, Camera } from 'lucide-react'
-import { formatTime } from '@/lib/utils'
+import { formatTime, compressImage } from '@/lib/utils'
 import { BATTLE_MULTIPLIER, DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -84,9 +84,12 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
   async function submitResult(file: File) {
     setFinishing(true)
     try {
+      const compressedBlob = await compressImage(file)
+      const compressedFile = new File([compressedBlob], 'photo.jpg', { type: 'image/jpeg' })
+
       const timeSeconds = Math.floor((Date.now() - startTimeRef.current) / 1000)
       const formData = new FormData()
-      formData.append('photo', file)
+      formData.append('photo', compressedFile)
       formData.append('recipeName', currentBattle.recipe.name)
       formData.append('recipePoints', currentBattle.recipe.points.toString())
       formData.append('timeSeconds', timeSeconds.toString())
@@ -108,68 +111,30 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
 
       await supabase.from('battles').update(update).eq('id', battle.id)
 
-      const { data: updatedBattle } = await supabase
-        .from('battles')
-        .select('*, recipe:recipes(*)')
-        .eq('id', battle.id)
-        .single()
+      // Try to complete battle if both finished using safe Postgres RPC
+      const { data: resultRpc } = await supabase.rpc('complete_battle', { p_battle_id: battle.id })
 
-      if (updatedBattle?.challenger_finished_at && updatedBattle?.opponent_finished_at) {
-        await calculateBattleResult(updatedBattle)
+      if (resultRpc && resultRpc.status === 'success') {
+        // Manually trigger local state update so UI shows results immediately
+        setCurrentBattle((prev: any) => ({
+          ...prev,
+          status: 'completed',
+          challenger_score: resultRpc.c_points,
+          opponent_score: resultRpc.o_points
+        }))
       }
 
       toast.success(`Якість: ${result.quality}/100`)
-      router.push('/')
-    } catch {
+      // No router.push here - stay on page to see result via subscription or results screen
+    } catch (err) {
+      console.error(err)
       toast.error('Помилка відправки')
     } finally {
       setFinishing(false)
     }
   }
 
-  async function calculateBattleResult(b: any) {
-    const totalPool = Math.round(b.recipe.points * BATTLE_MULTIPLIER)
-    const cTime = b.challenger_time || 99999
-    const oTime = b.opponent_time || 99999
-    const cQuality = b.challenger_quality || 50
-    const oQuality = b.opponent_quality || 50
 
-    const cSpeedScore = oTime > cTime ? 100 : Math.round((oTime / cTime) * 100)
-    const oSpeedScore = cTime > oTime ? 100 : Math.round((cTime / oTime) * 100)
-    const cTotal = Math.round(cQuality * 0.6 + cSpeedScore * 0.4)
-    const oTotal = Math.round(oQuality * 0.6 + oSpeedScore * 0.4)
-
-    const sum = cTotal + oTotal || 1
-    const cPoints = Math.round((cTotal / sum) * totalPool)
-    const oPoints = totalPool - cPoints
-
-    await supabase.from('battles').update({
-      status: 'completed',
-      challenger_score: cPoints,
-      opponent_score: oPoints,
-    }).eq('id', b.id)
-
-    const awardPoints = async (uid: string, pts: number) => {
-      const { data: p } = await supabase.from('profiles').select('balance, xp, rating_score').eq('id', uid).single()
-      if (p) {
-        await supabase.from('profiles').update({
-          balance: p.balance + pts,
-          xp: p.xp + pts,
-          rating_score: p.rating_score + pts,
-        }).eq('id', uid)
-      }
-    }
-
-    await Promise.all([
-      awardPoints(b.challenger_id, cPoints),
-      awardPoints(b.opponent_id, oPoints),
-    ])
-
-    await supabase.from('notifications').insert([
-      { user_id: b.challenger_id, type: 'battle_result', data: { battle_id: b.id, points: cPoints, opponent: b.opponent_id }, read: false },
-      { user_id: b.opponent_id, type: 'battle_result', data: { battle_id: b.id, points: oPoints, opponent: b.challenger_id }, read: false },
-    ])
-  }
 
   const totalPool = Math.round(currentBattle.recipe.points * BATTLE_MULTIPLIER)
 

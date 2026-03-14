@@ -41,17 +41,21 @@ RESPONSE FORMAT — ONLY this JSON array:
 [
   {
     "name": "Назва страви",
-    "description": "Опис",
+    "description": "Опис (2–3 речення)",
     "difficulty": "easy" | "medium" | "hard",
     "points": <integer 10-500>,
     "cookingTimeMinutes": <integer>,
-    "cuisine": "Тип кухні",
+    "cuisine_type": "Тип кухні",
     "ingredients": [{"name": "назва", "amount": "кількість", "unit": "одиниця"}],
-    "steps": [
-      {"text": "Детальний крок", "isCheckpoint": false, "checkpointLabel": null}
+    "instructions": [
+      {
+        "title": "Коротка назва кроку (до 40 символів)",
+        "description": "Детальний опис дій, часу та температури",
+        "requires_photo": false
+      }
     ]
   }
-]`
+] `
 }
 
 export async function POST(req: Request) {

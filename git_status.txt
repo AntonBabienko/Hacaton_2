@@ -1,0 +1,31 @@
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   cookquest/src/app/(app)/battle/[id]/battle-page.tsx
+	modified:   cookquest/src/app/(app)/challenges/page.tsx
+	modified:   cookquest/src/app/(app)/challenges/quest-map.tsx
+	modified:   cookquest/src/app/(app)/cook/[id]/cooking-session.tsx
+	modified:   cookquest/src/app/(app)/generate/page.tsx
+	modified:   cookquest/src/app/(app)/page.tsx
+	modified:   cookquest/src/app/(app)/profile/profile-content.tsx
+	modified:   cookquest/src/app/(app)/recipe/[id]/recipe-detail.tsx
+	modified:   cookquest/src/app/api/analyze-photo/route.ts
+	modified:   cookquest/src/app/api/battle/evaluate/route.ts
+	modified:   cookquest/src/app/api/cook/evaluate-step/route.ts
+	modified:   cookquest/src/app/api/generate-quests/route.ts
+	modified:   cookquest/src/app/api/generate-random-recipe/route.ts
+	modified:   cookquest/src/app/api/generate-recipes/route.ts
+	modified:   cookquest/src/lib/ai/validator.ts
+	modified:   cookquest/src/lib/utils.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	cookquest/public/fonts/
+	cookquest/src/app/api/battle/complete/
+	cookquest/src/lib/challenges.ts
+	git_status.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
