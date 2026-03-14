@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { ShoppingBag, Check, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -8,6 +8,7 @@ import { RARITY_COLORS, MASCOT_ITEMS, DEFAULT_MASCOT } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
 import { useActiveMascot, useSetActiveMascot, useBalance, useSetBalance } from '@/components/mascot-provider'
+import GenerateMascotSection, { CUSTOM_MASCOT_IMAGES } from './generate-mascot-section'
 
 interface Props {
   userId: string
@@ -32,6 +33,14 @@ export default function ShopContent({
   const [buying, setBuying] = useState<string | null>(null)
   const supabase = createClient()
   const setGlobalMascot = useSetActiveMascot()
+  const [customHappyUrl, setCustomHappyUrl] = useState<string | null>(null)
+
+  // Load custom mascot image from localStorage when active
+  useEffect(() => {
+    if (activeMascot === 'custom') {
+      setCustomHappyUrl(localStorage.getItem(CUSTOM_MASCOT_IMAGES.happy))
+    }
+  }, [activeMascot])
 
   // emoji field in skins table stores the mascot file key (e.g. 'broccoli')
   function getMascotKey(skin: any): string {
@@ -113,17 +122,25 @@ export default function ShopContent({
       <div className="bg-[#1a1a2e] rounded-2xl border border-orange-500/20 p-4">
         <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider mb-2">Активний маскот</p>
         <div className="flex items-center gap-4">
-          <Mascot name={activeMascot as any} mood="happy" size={72} animation="bounce" interactive />
+          {activeMascot === 'custom' && customHappyUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={customHappyUrl} alt="custom mascot" width={72} height={72} className="drop-shadow-md object-contain" />
+          ) : (
+            <Mascot name={activeMascot as any} mood="happy" size={72} animation="bounce" interactive />
+          )}
           <div>
             <p className="font-bold text-white text-lg">
-              {MASCOT_ITEMS.find(m => m.key === activeMascot)?.name || activeMascot}
+              {activeMascot === 'custom' ? 'Кастомний' : (MASCOT_ITEMS.find(m => m.key === activeMascot)?.name || activeMascot)}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">
-              {MASCOT_ITEMS.find(m => m.key === activeMascot)?.description}
+              {activeMascot === 'custom' ? 'Згенерований ШІ маскот' : MASCOT_ITEMS.find(m => m.key === activeMascot)?.description}
             </p>
           </div>
         </div>
       </div>
+
+      {/* AI Mascot Generator */}
+      <GenerateMascotSection />
 
       {/* Mascots grid */}
       <div className="grid grid-cols-2 gap-3">
