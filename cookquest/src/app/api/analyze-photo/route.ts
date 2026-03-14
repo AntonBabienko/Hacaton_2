@@ -2,6 +2,7 @@ import { createGroq } from '@ai-sdk/groq'
 import { generateText } from 'ai'
 import { GROQ_VISION_MODEL } from '@/lib/constants'
 import { extractJSON, validateIngredients } from '@/lib/ai/validator'
+import sharp from 'sharp'
 
 const groq = createGroq({ apiKey: process.env.GROQ_API_KEY })
 
@@ -16,6 +17,16 @@ const SYSTEM_PROMPT = `Ти — помічник кухаря у додатку 
 
 Приклад відповіді: ["помідори", "яйця", "сир", "молоко"]`
 
+// Resize image to max 1024px and compress to JPEG to stay under Groq limits
+async function compressPhoto(file: File): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const compressed = await sharp(buffer)
+    .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 80 })
+    .toBuffer()
+  return `data:image/jpeg;base64,${compressed.toString('base64')}`
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData()
@@ -29,15 +40,15 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Too many photos (max 5)' }, { status: 400 })
     }
 
-    // ВИПРАВЛЕННЯ: Тепер ми передаємо Data URL (base64)
     const imageContents = await Promise.all(
       files.map(async (file) => {
-        const buffer = await file.arrayBuffer()
-        const base64 = Buffer.from(buffer).toString('base64')
-        const dataUrl = `data:${file.type || 'image/jpeg'};base64,${base64}`
+        const dataUrl = await compressPhoto(file)
+        // Extract raw base64 (without data: prefix) for AI SDK
+        const base64 = dataUrl.split(',')[1]
         return {
           type: 'image' as const,
-          image: dataUrl,
+          image: base64,
+          mimeType: 'image/jpeg' as const,
         }
       })
     )
@@ -67,12 +78,22 @@ export async function POST(req: Request) {
 
     return Response.json({ ingredients })
 
-  } catch (error) {
-    // Додав перехоплення помилок, щоб у разі чого сервер не "падав" мовчки,
-    // а чітко писав проблему в консоль VS Code
-    console.error('Помилка API аналізу фото:', error)
+  } catch (error: any) {
+    const msg = error?.message ?? String(error)
+    console.error('Помилка API аналізу фото:', msg)
+    console.error('Stack:', error?.stack)
+
+    if (msg.includes('Request too large') || msg.includes('413')) {
+      return Response.json({ error: 'Фото занадто велике — спробуй менше' }, { status: 413 })
+    }
+    if (msg.includes('401') || msg.includes('Invalid API')) {
+      return Response.json({ error: 'Невірний GROQ API ключ' }, { status: 401 })
+    }
+    if (msg.includes('rate') || msg.includes('429')) {
+      return Response.json({ error: 'Забагато запитів — зачекай хвилину' }, { status: 429 })
+    }
     return Response.json(
-      { error: 'Внутрішня помилка сервера при обробці фото' },
+      { error: `Помилка аналізу: ${msg.slice(0, 200)}` },
       { status: 500 }
     )
   }

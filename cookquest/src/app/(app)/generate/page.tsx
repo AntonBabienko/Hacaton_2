@@ -81,8 +81,13 @@ function GenerateContent() {
       const res = await fetch('/api/analyze-photo', { method: 'POST', body: formData })
       const data = await res.json()
 
+      if (!res.ok) {
+        toast.error(data.error || `Помилка сервера (${res.status})`)
+        return
+      }
+
       if (!data.ingredients?.length) {
-        toast.error('Не вдалося розпізнати продукти')
+        toast.error('Не вдалося розпізнати продукти — спробуй інше фото')
         return
       }
       setIngredients(data.ingredients)

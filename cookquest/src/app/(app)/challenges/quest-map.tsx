@@ -6,13 +6,14 @@ import Link from 'next/link'
 import Mascot from '@/components/mascot'
 import { useActiveMascot } from '@/components/mascot-provider'
 
-// Map dimensions
+// Map dimensions — larger nodes with more spacing for 3D effect
 const MAP_WIDTH = 340
-const NODE_SPACING_Y = 160
-const MAP_PADDING_TOP = 110
-const MAP_PADDING_BOTTOM = 140
-const AMPLITUDE = 90 
-const NODE_RADIUS = 42
+const NODE_SPACING_Y = 200
+const MAP_PADDING_TOP = 100
+const MAP_PADDING_BOTTOM = 100
+const AMPLITUDE = 80
+const NODE_RADIUS = 32
+const DISC_THICKNESS = 10
 
 const WEEK_THEMES = [
   { id: 'purple', from: '#a855f7', to: '#7c3aed', node: 'from-purple-500 to-violet-600', shadow: 'shadow-purple-500/30' },
@@ -63,10 +64,9 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
 
   const svgPath = generateSvgPath(nodes)
   const activeIndex = challenges.findIndex((c: any) => c.date === today && !completedSet.has(c.id))
-  
+
   const getCuisineFromDate = (dateStr: string) => {
     const d = new Date(dateStr)
-    // A more stable week numbering
     const weekNumber = Math.floor(d.getTime() / (7 * 24 * 60 * 60 * 1000))
     const { CUISINES_SCHEDULE } = require('@/lib/constants')
     return CUISINES_SCHEDULE[weekNumber % CUISINES_SCHEDULE.length]
@@ -100,9 +100,9 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
   return (
     <div className="space-y-4 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-br from-purple-600/20 to-violet-600/20 border border-purple-500/20 rounded-2xl p-5 sticky top-4 z-50 backdrop-blur-md">
+      <div className="bg-gradient-to-br from-purple-600/20 to-violet-600/20 border border-purple-500/20 rounded-2xl p-4 sticky top-4 z-50 backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <Mascot name={activeMascot as any} mood="happy" size={56} animation="idle" interactive={false} />
+          <Mascot name={activeMascot as any} mood="happy" size={48} animation="idle" interactive={false} />
           <div>
             <h1 className="text-lg font-extrabold text-white">Мапа квестів</h1>
             <p className="text-xs text-gray-400">
@@ -112,227 +112,298 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
         </div>
       </div>
 
-      <div className="relative overflow-visible" style={{ height: mapHeight }}>
-        {/* SVG Paths */}
-        <svg
-          width={MAP_WIDTH}
-          height={mapHeight}
-          className="absolute inset-0 mx-auto"
-          style={{ left: '50%', transform: 'translateX(-50%)' }}
+      {/* Isometric map — camera parallel to road, no perspective shrink */}
+      <div className="overflow-visible">
+        <div
+          className="relative mx-auto"
+          style={{
+            width: MAP_WIDTH,
+            height: mapHeight,
+          }}
         >
-          {/* Base Path (Shadow) */}
-          <path d={svgPath} fill="none" stroke="#222240" strokeWidth="12" strokeLinecap="round" opacity="0.3" />
-          {/* Base Path */}
-          <path d={svgPath} fill="none" stroke="#2a2a4a" strokeWidth="6" strokeLinecap="round" />
-          
-          {/* Progress Path */}
-          <motion.path
-            d={svgPath}
-            fill="none"
-            stroke="url(#masterGradient)"
-            strokeWidth="6"
-            strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: progressFraction }}
-            transition={{ duration: 1.5, ease: 'easeOut' }}
-          />
+          {/* SVG Paths */}
+          <svg
+            width={MAP_WIDTH}
+            height={mapHeight}
+            className="absolute inset-0"
+          >
+            {/* Road shadow */}
+            <path d={svgPath} fill="none" stroke="#111128" strokeWidth="32" strokeLinecap="round" opacity="0.5" />
+            {/* Road base */}
+            <path d={svgPath} fill="none" stroke="#1e1e3a" strokeWidth="20" strokeLinecap="round" />
+            {/* Road dashes */}
+            <path d={svgPath} fill="none" stroke="#2a2a50" strokeWidth="3" strokeLinecap="round" strokeDasharray="12 16" />
 
-          <defs>
-            <linearGradient id="masterGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22c55e" />
-              <stop offset="100%" stopColor="#a855f7" />
-            </linearGradient>
-          </defs>
-        </svg>
+            {/* Progress Path */}
+            <motion.path
+              d={svgPath}
+              fill="none"
+              stroke="url(#masterGradient)"
+              strokeWidth="6"
+              strokeLinecap="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: progressFraction }}
+              transition={{ duration: 1.5, ease: 'easeOut' }}
+            />
 
-        {/* Week Separators and Labels */}
-        {weeks.map((week, weekIdx) => {
-          const firstNodeIdx = weekIdx * 7
-          const pos = nodes[firstNodeIdx]
-          const cuisine = week[0]?.cuisine_type || getCuisineFromDate(week[0]?.date)
-          
-          return (
-            <div
-              key={`week-label-${weekIdx}`}
-              className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none"
-              style={{ top: pos.y - 85, zIndex: 10 }}
-            >
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#1a1a2e]/95 border-2 border-white/10 px-6 py-2 rounded-[1.5rem] backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col items-center min-w-[180px]"
+            <defs>
+              <linearGradient id="masterGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22c55e" />
+                <stop offset="100%" stopColor="#a855f7" />
+              </linearGradient>
+            </defs>
+          </svg>
+
+          {/* Nodes */}
+          {challenges.map((challenge: any, index: number) => {
+            const isActive = index === activeIndex
+            const isToday = challenge.date === today
+            const isCompleted = completedSet.has(challenge.id)
+            const isLocked = !isCompleted && index > activeIndex
+            const pos = nodes[index]
+            const weekIdx = Math.floor(index / 7)
+            const theme = WEEK_THEMES[weekIdx % WEEK_THEMES.length]
+
+            const date = new Date(challenge.date)
+            const dayLabel = date.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric' })
+
+            const cuisine = challenge.cuisine_type || getCuisineFromDate(challenge.date)
+            const desc = challenge.description
+            const generateUrl = `/generate?mode=random&challengeDescription=${encodeURIComponent(desc)}&cuisine=${encodeURIComponent(cuisine)}`
+            const isFirstInWeek = index % 7 === 0
+
+            return (
+              <div
+                key={challenge.id}
+                ref={isActive ? activeRef : undefined}
+                className="absolute"
+                style={{
+                  left: pos.x,
+                  top: pos.y,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: isActive ? 40 : 20,
+                }}
               >
-                <div className={`absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 px-3 py-0.5 rounded-full bg-gradient-to-r ${WEEK_THEMES[weekIdx % WEEK_THEMES.length].node} text-[8px] font-black text-white uppercase tracking-tighter`}>
-                  МАРШРУТ {weekIdx + 1}
-                </div>
-                <span className="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-bold mb-0.5">Тиждень</span>
-                <span className="text-base text-white font-black">{cuisine} кухня</span>
-              </motion.div>
-            </div>
-          )
-        })}
-
-        {/* Nodes */}
-        {challenges.map((challenge: any, index: number) => {
-          const isToday = challenge.date === today
-          const isCompleted = completedSet.has(challenge.id)
-          const isActive = isToday && !isCompleted
-          const isLocked = !isToday && !isCompleted
-          const pos = nodes[index]
-          const weekIdx = Math.floor(index / 7)
-          const theme = WEEK_THEMES[weekIdx % WEEK_THEMES.length]
-          
-          const date = new Date(challenge.date)
-          const dayLabel = date.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric' })
-
-          // Construct clean parameters for the generator
-          const cuisine = challenge.cuisine_type || getCuisineFromDate(challenge.date)
-          const desc = challenge.description
-          const generateUrl = `/generate?mode=random&challengeDescription=${encodeURIComponent(desc)}&cuisine=${encodeURIComponent(cuisine)}`
-
-          return (
-            <div
-              key={challenge.id}
-              ref={isActive ? activeRef : undefined}
-              className="absolute"
-              style={{
-                left: `calc(50% + ${pos.x - MAP_WIDTH / 2}px)`,
-                top: pos.y,
-                transform: 'translate(-50%, -50%)',
-                zIndex: isActive ? 40 : 20,
-              }}
-            >
-              {isActive ? (
-                <ActiveNode 
-                  theme={theme} 
-                  challenge={challenge} 
-                  dayLabel={dayLabel} 
-                  mascotName={activeMascot} 
-                  index={index} 
-                  href={generateUrl}
-                />
-              ) : (
-                <StaticNode 
-                  theme={theme} 
-                  challenge={challenge} 
-                  dayLabel={dayLabel} 
-                  mascotName={activeMascot} 
-                  isCompleted={isCompleted} 
-                  isLocked={isLocked} 
-                  index={index} 
-                  href={isCompleted ? undefined : generateUrl}
-                />
-              )}
-            </div>
-          )
-        })}
+                {isActive ? (
+                  <ActiveNode
+                    theme={theme}
+                    challenge={challenge}
+                    dayLabel={dayLabel}
+                    mascotName={activeMascot}
+                    index={index}
+                    href={generateUrl}
+                    isFirstInWeek={isFirstInWeek}
+                    weekIdx={weekIdx}
+                    cuisine={cuisine}
+                  />
+                ) : (
+                  <StaticNode
+                    theme={theme}
+                    challenge={challenge}
+                    dayLabel={dayLabel}
+                    mascotName={activeMascot}
+                    isCompleted={isCompleted}
+                    isLocked={isLocked}
+                    index={index}
+                    href={isCompleted ? undefined : generateUrl}
+                    isFirstInWeek={isFirstInWeek}
+                    weekIdx={weekIdx}
+                    cuisine={cuisine}
+                  />
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
 }
 
-function ActiveNode({ theme, challenge, dayLabel, mascotName, index, href }: any) {
+function ActiveNode({ theme, dayLabel, mascotName, index, href, isFirstInWeek, weekIdx, cuisine }: any) {
+  const d = NODE_RADIUS * 2
+  const faceH = Math.round(d * 0.72) // ellipse: circle flattened by perspective
   return (
     <motion.div
-      initial={{ scale: 0, y: 30 }}
-      animate={{ scale: 1, y: 0 }}
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
       className="flex flex-col items-center"
     >
-      <div className="mb-4 relative">
-        <motion.div 
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <Mascot name={mascotName} mood="happy" size={88} animation="bounce" interactive />
-        </motion.div>
-        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-yellow-400 text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_4px_10px_rgba(250,204,21,0.4)] whitespace-nowrap">
-          АКТИВНЕ ЗАВДАННЯ
-        </div>
+      {/* Mascot above node */}
+      <div className="mb-2">
+        <Mascot name={mascotName} mood="happy" size={56} animation="bounce" interactive />
       </div>
 
       <Link href={href || '#'}>
-        <motion.div className="relative group">
-          {/* Outer Glow */}
-          <motion.div
-            className={`absolute inset-0 rounded-full bg-gradient-to-br ${theme.node} blur-2xl opacity-60`}
-            animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
-            transition={{ duration: 2.5, repeat: Infinity }}
-          />
-          {/* Orbit rings */}
-          <motion.div
-            className="absolute inset-[-12px] rounded-full border border-white/10"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-          />
-          {/* Pulse ring */}
-          <motion.div
-            className="absolute inset-0 rounded-full border-2 border-white/50"
-            animate={{ scale: [1, 2], opacity: [0.5, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
+        <motion.div className="relative group" style={{ width: d, height: faceH + DISC_THICKNESS }}>
+          {/* Glow — optimized without blur filter */}
           <div
-            className={`relative flex items-center justify-center rounded-full bg-gradient-to-br ${theme.node} border-[6px] border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.4)] transition-transform group-hover:scale-110 z-10`}
-            style={{ width: NODE_RADIUS * 2, height: NODE_RADIUS * 2 }}
+            className="absolute"
+            style={{ inset: -12, bottom: DISC_THICKNESS, borderRadius: '50%', background: `radial-gradient(circle, ${theme.from}33 0%, transparent 70%)` }}
+          />
+
+          {/* Single stable Pulse Wave — reaches 0 opacity well before max scale to avoid flashes */}
+          <motion.div
+            key={`wave-${index}`}
+            className="absolute border-2 border-white/40 will-change-transform"
+            style={{ left: 0, top: DISC_THICKNESS, width: d, height: faceH, borderRadius: '50%' }}
+            initial={{ opacity: 0, scale: 1 }}
+            animate={{ 
+              scale: [1, 1.8, 2.5, 2.6],
+              opacity: [0, 0.4, 0, 0] 
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              ease: "easeOut",
+              times: [0, 0.2, 0.8, 1]
+            }}
+          />
+
+          {/* 3D disc rim — starts from equator to match curvature exactly */}
+          <div
+            className="absolute bg-gradient-to-b"
+            style={{
+              left: 0,
+              width: d,
+              top: faceH / 2,
+              height: faceH / 2 + DISC_THICKNESS,
+              borderRadius: `0 0 ${d / 2}px ${d / 2}px / 0 0 ${faceH / 2}px ${faceH / 2}px`,
+              background: `linear-gradient(to bottom, #1a1a3a, #0a0a1a)`,
+              opacity: 0.9,
+            }}
+          />
+          {/* Rim side-light highlight */}
+          <div
+            className="absolute"
+            style={{
+              left: 0,
+              width: d,
+              top: faceH / 2,
+              height: faceH / 2 + DISC_THICKNESS,
+              borderRadius: `0 0 ${d / 2}px ${d / 2}px / 0 0 ${faceH / 2}px ${faceH / 2}px`,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.15) 0%, transparent 40%, transparent 70%, rgba(0,0,0,0.2) 100%)',
+            }}
+          />
+
+          {/* Ground shadow — simplified */}
+          <div
+            className="absolute left-1/2 -translate-x-1/2 bg-black/40"
+            style={{
+              width: d * 1.1,
+              height: 8,
+              top: faceH + DISC_THICKNESS - 2,
+              borderRadius: '50%',
+            }}
+          />
+
+          {/* Main disc face — ellipse (static) */}
+          <div
+            className={`absolute left-0 top-0 flex items-center justify-center bg-gradient-to-br ${theme.node} border-[3px] border-white/30 shadow-lg z-10`}
+            style={{ width: d, height: faceH, borderRadius: '50%' }}
           >
-            <span className="text-white font-black text-4xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">{index + 1}</span>
+            <span className="text-white font-black text-xl drop-shadow-md">{index + 1}</span>
           </div>
         </motion.div>
       </Link>
 
-      <motion.div 
-        initial={{ opacity: 0, y: 15 }}
+      {/* Plank / tablet under the node */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
-        className="mt-6 bg-[#1a1a2e]/90 border-2 border-white/10 rounded-[2.5rem] p-6 w-64 text-center shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] relative overflow-hidden backdrop-blur-xl"
+        transition={{ delay: 0.15 }}
+        className="mt-2 relative"
       >
-        <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${theme.node}`} />
-        <p className="text-[10px] text-purple-400 uppercase font-black tracking-[0.2em] mb-2">{dayLabel}</p>
-        <p className="text-base text-white font-bold leading-tight mb-4">{challenge.description}</p>
-        <div className={`flex items-center justify-center gap-2 py-2 px-6 rounded-2xl bg-gradient-to-r ${theme.node} shadow-lg shadow-purple-500/30 ring-1 ring-white/20`}>
-          <span className="text-white font-black text-xs uppercase tracking-wider">Отримати {challenge.bonus_points} XP</span>
+        <div className={`bg-[#13132a]/90 border border-white/10 rounded-xl px-3 py-2 text-center backdrop-blur-sm shadow-lg`}>
+          <div className={`absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r ${theme.node} rounded-t-xl`} />
+          {isFirstInWeek && (
+            <p className={`text-[8px] uppercase tracking-widest font-bold bg-gradient-to-r ${theme.node} bg-clip-text text-transparent mb-0.5`}>
+              Маршрут {weekIdx + 1} &middot; {cuisine}
+            </p>
+          )}
+          <p className="text-[9px] text-gray-400 font-semibold">{dayLabel}</p>
         </div>
       </motion.div>
     </motion.div>
   )
 }
 
-function StaticNode({ theme, challenge, dayLabel, mascotName, isCompleted, isLocked, index, href }: any) {
-  const content = (
-    <div
-      className={`relative flex items-center justify-center rounded-full transition-all border-4 ${
-        isCompleted 
-          ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-white/30 shadow-lg shadow-green-500/20' 
-          : isLocked 
-            ? 'bg-[#222240] border-white/5 opacity-60' 
-            : `bg-gradient-to-br ${theme.node} border-white/20 shadow-xl shadow-black/20`
-      }`}
-      style={{ 
-        width: (isLocked ? NODE_RADIUS * 1.6 : NODE_RADIUS * 1.8), 
-        height: (isLocked ? NODE_RADIUS * 1.6 : NODE_RADIUS * 1.8) 
-      }}
-    >
-      {isCompleted ? (
-        <img src={`/mascots/${mascotName}_happy.png`} alt="" className="w-12 h-12 drop-shadow-lg" />
-      ) : (
-        <span className={`font-black text-xl ${isLocked ? 'text-gray-700' : 'text-white'}`}>{index + 1}</span>
-      )}
+function StaticNode({ theme, challenge, dayLabel, mascotName, isCompleted, isLocked, index, href, isFirstInWeek, weekIdx, cuisine }: any) {
+  const size = NODE_RADIUS * 2
+  const thickness = DISC_THICKNESS
+  const faceH = Math.round(size * 0.72) // ellipse perspective
 
-      {isCompleted && (
-        <div className="absolute -top-1 -right-1 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center border-2 border-[#0f0f23] shadow-lg">
-          <svg width="14" height="14" viewBox="0 0 10 10" fill="none">
-            <path d="M2 5L4 7L8 3" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-      )}
-      
-      {isLocked && (
-        <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-[1px]">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#444" strokeWidth="3.5">
-            <rect x="3" y="11" width="18" height="11" rx="2" />
-            <path d="M7 11V7a5 5 0 0110 0v4" />
-          </svg>
-        </div>
-      )}
+  const content = (
+    <div className="relative" style={{ width: size, height: faceH + thickness }}>
+      {/* 3D disc rim — solid gray for locked, theme for others */}
+      <div
+        className="absolute"
+        style={{
+          left: 0,
+          width: size,
+          top: faceH / 2,
+          height: faceH / 2 + thickness,
+          borderRadius: `0 0 ${size / 2}px ${size / 2}px / 0 0 ${faceH / 2}px ${faceH / 2}px`,
+          background: isCompleted 
+            ? 'linear-gradient(to bottom, #15803d, #064e3b)' 
+            : isLocked 
+              ? 'linear-gradient(to bottom, #171717, #0a0a0a)' 
+              : `linear-gradient(to bottom, #1a1a3a, #0a0a1a)`,
+          opacity: 1,
+        }}
+      />
+      {/* Rim side highlight */}
+      <div
+        className="absolute"
+        style={{
+          left: 0,
+          width: size,
+          top: faceH / 2,
+          height: faceH / 2 + thickness,
+          borderRadius: `0 0 ${size / 2}px ${size / 2}px / 0 0 ${faceH / 2}px ${faceH / 2}px`,
+          background: 'linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 35%, transparent 75%, rgba(0,0,0,0.15) 100%)',
+          opacity: isLocked ? 0 : 1,
+        }}
+      />
+
+      {/* Ground shadow */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 bg-black/20 blur-sm"
+        style={{
+          width: size * 0.85,
+          height: 6,
+          top: faceH + thickness - 1,
+          borderRadius: '50%',
+        }}
+      />
+
+      {/* Main disc face — ellipse */}
+      <div
+        className={`absolute left-0 top-0 flex items-center justify-center border-[3px] z-10 ${isCompleted
+            ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-white/25 shadow-md shadow-green-500/20'
+            : isLocked
+              ? 'bg-gradient-to-br from-neutral-800 to-neutral-950 border-white/5 shadow-2xl'
+              : `bg-gradient-to-br ${theme.node} border-white/15 shadow-md`
+          }`}
+        style={{ width: size, height: faceH, borderRadius: '50%' }}
+      >
+        {isCompleted ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={`/mascots/${mascotName}_happy.png`} alt="" className="w-8 h-8 drop-shadow" />
+        ) : (
+          <span className={`font-black text-base ${isLocked ? 'text-neutral-700' : 'text-white'}`}>{index + 1}</span>
+        )}
+
+        {isCompleted && (
+          <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-[#0f0f23]">
+            <svg width="12" height="12" viewBox="0 0 10 10" fill="none">
+              <path d="M2 5L4 7L8 3" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        )}
+
+
+      </div>
     </div>
   )
 
@@ -349,11 +420,18 @@ function StaticNode({ theme, challenge, dayLabel, mascotName, isCompleted, isLoc
       ) : (
         content
       )}
-      {!isCompleted && (
-        <p className={`text-[10px] font-black mt-2 tracking-widest ${isLocked ? 'text-gray-600' : 'text-gray-400'}`}>
-          {dayLabel.toUpperCase()}
+      {/* Plank under node */}
+      <div className={`mt-1.5 bg-[#13132a]/80 border border-white/5 rounded-lg px-2.5 py-1 text-center ${isLocked ? 'opacity-40' : ''}`}>
+        {isFirstInWeek && (
+          <p className={`text-[7px] uppercase tracking-widest font-bold bg-gradient-to-r ${theme.node} bg-clip-text text-transparent`}>
+            Маршрут {weekIdx + 1} &middot; {cuisine}
+          </p>
+        )}
+        <p className={`text-[9px] font-semibold ${isLocked ? 'text-gray-600' : 'text-gray-400'}`}>{dayLabel}</p>
+        <p className={`text-[10px] font-bold leading-tight line-clamp-1 mt-0.5 ${isLocked ? 'text-gray-600' : isCompleted ? 'text-green-400' : 'text-white'}`}>
+          {challenge.description}
         </p>
-      )}
+      </div>
     </motion.div>
   )
 }
