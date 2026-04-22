@@ -45,17 +45,17 @@ RECIPE QUALITY:
 RESPONSE FORMAT — ONLY this JSON array:
 [
   {
-    "name": "Назва страви",
-    "description": "Опис (2–3 речення)",
+    "name": "${locale === 'uk' ? 'Назва страви' : 'Dish name'}",
+    "description": "${locale === 'uk' ? 'Опис (2–3 речення)' : 'Description (2-3 sentences)'}",
     "difficulty": "easy" | "medium" | "hard",
     "points": <integer 10-500>,
     "cookingTimeMinutes": <integer>,
-    "cuisine_type": "Тип кухні",
-    "ingredients": [{"name": "назва", "amount": "кількість", "unit": "одиниця"}],
+    "cuisine_type": "${locale === 'uk' ? 'Тип кухні' : 'Cuisine type'}",
+    "ingredients": [{"name": "${locale === 'uk' ? 'назва' : 'name'}", "amount": "${locale === 'uk' ? 'кількість' : 'amount'}", "unit": "${locale === 'uk' ? 'одиниця' : 'unit'}"}],
     "instructions": [
       {
-        "title": "Коротка назва кроку (до 40 символів)",
-        "description": "Детальний опис дій, часу та температури",
+        "title": "${locale === 'uk' ? 'Коротка назва кроку' : 'Short title'}",
+        "description": "${locale === 'uk' ? 'Детальний опис дій, часу та температури' : 'Detailed description of actions, time and temperature'}",
         "requires_photo": false
       }
     ]

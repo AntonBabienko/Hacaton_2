@@ -75,14 +75,15 @@ export default async function ChallengesPage() {
             date: missingDates[i],
             description: q.description,
             bonus_points: q.bonus_points,
-            cuisine_type: weekCuisine,
+            cuisine: weekCuisine,
           }))
 
           if (rows.length > 0) {
-            const { data: inserted } = await supabase
+            const { data: inserted, error: insertErr } = await supabase
               .from('challenges')
               .insert(rows)
               .select()
+            if (insertErr) console.error('Insert challenges error:', insertErr)
             return inserted || []
           }
         }

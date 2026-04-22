@@ -74,7 +74,7 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
     return CUISINES_SCHEDULE[weekNumber % CUISINES_SCHEDULE.length]
   }
 
-  const currentCuisine = challenges.find(c => c.date === today)?.cuisine_type || getCuisineFromDate(today)
+  const currentCuisine = challenges.find(c => c.date === today)?.cuisine || getCuisineFromDate(today)
 
   useEffect(() => {
     if (activeRef.current) {
@@ -170,7 +170,7 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
             const dateLocale = locale === 'en' ? 'en-US' : 'uk-UA'
             const dayLabel = date.toLocaleDateString(dateLocale, { weekday: 'short', day: 'numeric' })
 
-            const cuisine = challenge.cuisine_type || getCuisineFromDate(challenge.date)
+            const cuisine = challenge.cuisine || getCuisineFromDate(challenge.date)
             const desc = challenge.description
             const generateUrl = `/generate?mode=random&challengeDescription=${encodeURIComponent(desc)}&cuisine=${encodeURIComponent(cuisine)}`
             const isFirstInWeek = index % 7 === 0

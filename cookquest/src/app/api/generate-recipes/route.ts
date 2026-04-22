@@ -65,19 +65,19 @@ Each recipe MUST be a FULL, PROFESSIONAL, END-TO-END COOKING GUIDE.
 RESPONSE FORMAT — return ONLY this JSON array:
 [
   {
-    "name": "Назва страви",
-    "description": "Опис (2–3 речення про смак та аромат)",
+    "name": "${locale === 'uk' ? 'Назва страви' : 'Dish name'}",
+    "description": "${locale === 'uk' ? 'Опис (2–3 речення про смак та аромат)' : 'Description (2-3 sentences about taste and aroma)'}",
     "difficulty": "easy" | "medium" | "hard",
     "points": <integer 10-500>,
     "cookingTimeMinutes": <integer>,
-    "cuisine_type": "Тип кухні",
+    "cuisine_type": "${locale === 'uk' ? 'Тип кухні' : 'Cuisine type'}",
     "ingredients": [
-      {"name": "назва інгредієнта", "amount": "кількість", "unit": "одиниця"}
+      {"name": "${locale === 'uk' ? 'назва інгредієнта' : 'ingredient name'}", "amount": "${locale === 'uk' ? 'кількість' : 'amount'}", "unit": "${locale === 'uk' ? 'одиниця' : 'unit'}"}
     ],
     "instructions": [
       {
-        "title": "Коротка назва (напр. Підготовка овочів)",
-        "description": "Повний детальний опис дій зі вказівкою часу та вогню",
+        "title": "${locale === 'uk' ? 'Коротка назва (напр. Підготовка овочів)' : 'Short title (e.g. Prep veggies)'}",
+        "description": "${locale === 'uk' ? 'Повний детальний опис дій зі вказівкою часу та вогню' : 'Detailed description of actions with time and heat'}",
         "requires_photo": false
       }
     ]

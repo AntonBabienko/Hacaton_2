@@ -132,10 +132,10 @@ export default function ShopContent({
           )}
           <div>
             <p className="font-bold text-white text-lg">
-              {activeMascot === 'custom' ? t.shop.generator.result : (MASCOT_ITEMS.find(m => m.key === activeMascot)?.name || activeMascot)}
+              {activeMascot === 'custom' ? t.shop.generator.result : ((t.constants.mascots as any)[activeMascot]?.name || activeMascot)}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">
-              {activeMascot === 'custom' ? t.shop.generator.subtitle : MASCOT_ITEMS.find(m => m.key === activeMascot)?.description}
+              {activeMascot === 'custom' ? t.shop.generator.subtitle : ((t.constants.mascots as any)[activeMascot]?.description || '')}
             </p>
           </div>
         </div>
@@ -174,8 +174,8 @@ export default function ShopContent({
                 </div>
               </div>
 
-              <h3 className="font-bold text-white text-center text-sm">{skin.name}</h3>
-              <p className="text-[10px] text-gray-500 text-center mt-0.5 line-clamp-2">{skin.description}</p>
+              <h3 className="font-bold text-white text-center text-sm">{(t.constants.mascots as any)[mascotKey]?.name || skin.name}</h3>
+              <p className="text-[10px] text-gray-500 text-center mt-0.5 line-clamp-2">{(t.constants.mascots as any)[mascotKey]?.description || skin.description}</p>
 
               <div className="flex justify-center mt-2">
                 <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-bold', RARITY_COLORS[skin.rarity as keyof typeof RARITY_COLORS])}>

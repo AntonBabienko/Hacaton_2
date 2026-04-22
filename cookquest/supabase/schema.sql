@@ -203,8 +203,9 @@ create policy "Users can create friendship requests" on friendships for insert w
 create policy "Users can update their friendship requests" on friendships for update using (auth.uid() = addressee_id or auth.uid() = requester_id);
 create policy "Users can delete friendships" on friendships for delete using (auth.uid() = requester_id or auth.uid() = addressee_id);
 
--- Challenges (public read)
+-- Challenges (public read, authenticated insert for auto-generation)
 create policy "Challenges are viewable by everyone" on challenges for select using (true);
+create policy "Authenticated users can insert challenges" on challenges for insert to authenticated with check (true);
 
 -- User challenge completions
 create policy "Users can view own completions" on user_challenge_completions for select using (auth.uid() = user_id);
