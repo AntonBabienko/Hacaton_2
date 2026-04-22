@@ -9,6 +9,9 @@ import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Mascot from '@/components/mascot'
+import { useTranslation } from '@/lib/i18n/client'
+import { setLocale } from '@/app/actions/locale'
+import { useRouter } from 'next/navigation'
 
 interface Props {
   profile: any
@@ -16,6 +19,8 @@ interface Props {
 }
 
 export default function ProfileContent({ profile, savedRecipes }: Props) {
+  const { t, locale } = useTranslation()
+  const router = useRouter()
   const [activeMascot, setActiveMascot] = useState(profile?.active_skin_emoji || 'broccoli')
   const supabase = createClient()
 
@@ -50,11 +55,18 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
           },
         })
         .eq('id', profile.id)
-      if (error) { toast.error('Помилка збереження'); return }
-      toast.success('Налаштування збережено!')
+      if (error) { toast.error(t.profile.save_error); return }
+      toast.success(t.profile.settings_saved)
     } finally {
       setSaving(false)
     }
+  }
+
+  async function handleLanguageChange(newLocale: 'en' | 'uk') {
+    await setLocale(newLocale)
+    // Optional: update locale in DB
+    await supabase.from('profiles').update({ locale: newLocale }).eq('id', profile.id)
+    router.refresh()
   }
 
   function toggleAllergen(key: string) {
@@ -176,7 +188,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
           </div>
           <div className="flex-1">
             <h1 className="text-lg font-extrabold text-white">{profile?.username}</h1>
-            <p className="text-xs text-gray-400">{levelInfo.name} • Рівень {profile?.level}</p>
+            <p className="text-xs text-gray-400">{levelInfo.name} • {t.profile.level} {profile?.level}</p>
             <div className="mt-2 flex items-center gap-1.5">
               <Zap size={12} className="text-green-400" />
               <div className="flex-1 bg-white/5 rounded-full h-2">
@@ -194,11 +206,11 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
         <div className="grid grid-cols-2 gap-2 mt-4">
           <div className="bg-yellow-500/10 rounded-xl p-3 text-center">
             <div className="text-lg font-extrabold text-yellow-400">💰 {profile?.balance}</div>
-            <div className="text-[10px] text-gray-500">Баланс</div>
+            <div className="text-[10px] text-gray-500">{t.profile.balance}</div>
           </div>
           <div className="bg-purple-500/10 rounded-xl p-3 text-center">
             <div className="text-lg font-extrabold text-purple-400">🏆 {profile?.rating_score}</div>
-            <div className="text-[10px] text-gray-500">Рейтинг</div>
+            <div className="text-[10px] text-gray-500">{t.profile.rating}</div>
           </div>
         </div>
       </div>
@@ -207,11 +219,11 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
       <div className="bg-[#1a1a2e] rounded-2xl border border-white/5 p-5">
         <h2 className="font-bold text-white mb-4 flex items-center gap-2">
           <BookOpen size={18} className="text-orange-400" />
-          Збережені рецепти ({savedRecipes.length})
+          {t.profile.saved_recipes} ({savedRecipes.length})
         </h2>
         {savedRecipes.length === 0 ? (
           <div className="py-4">
-            <Mascot name={activeMascot as any} mood="neutral" size={100} message="Ще немає рецептів. Час готувати!" animation="bounce" />
+            <Mascot name={activeMascot as any} mood="neutral" size={100} message={t.profile.no_recipes} animation="bounce" />
           </div>
         ) : (
           <div className="space-y-2">
@@ -256,7 +268,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
       {/* Active mascot */}
       <div className="bg-[#1a1a2e] rounded-2xl border border-white/5 p-5">
         <h2 className="font-bold text-white mb-3 flex items-center gap-2">
-          Мій маскот
+          {t.profile.my_mascot}
         </h2>
         <div className="flex items-center gap-4">
           <Mascot
@@ -273,9 +285,41 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
               href="/shop"
               className="inline-block mt-2 text-xs text-orange-400 hover:text-orange-300 font-bold"
             >
-              Змінити в магазині →
+              {t.profile.change_in_shop}
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Language / App Settings */}
+      <div className="bg-[#1a1a2e] rounded-2xl border border-white/5 p-5">
+        <h2 className="font-bold text-white mb-4 flex items-center gap-2">
+          <Settings size={18} className="text-blue-400" />
+          {t.profile.language_select}
+        </h2>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => handleLanguageChange('uk')}
+            className={cn(
+              'px-3 py-2 rounded-xl text-sm font-bold transition-all border',
+              locale === 'uk' 
+                ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
+                : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10'
+            )}
+          >
+            Українська
+          </button>
+          <button
+            onClick={() => handleLanguageChange('en')}
+            className={cn(
+              'px-3 py-2 rounded-xl text-sm font-bold transition-all border',
+              locale === 'en' 
+                ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
+                : 'bg-white/5 text-gray-400 border-white/5 hover:bg-white/10'
+            )}
+          >
+            English
+          </button>
         </div>
       </div>
 
@@ -283,12 +327,12 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
       <div className="bg-[#1a1a2e] rounded-2xl border border-white/5 p-5">
         <h2 className="font-bold text-white mb-4 flex items-center gap-2">
           <Settings size={18} className="text-green-400" />
-          Кулінарні вподобання
+          {t.profile.culinary_prefs}
         </h2>
 
         {/* Diet type */}
         <div className="mb-4">
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Тип харчування</p>
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">{t.profile.diet_type}</p>
           <div className="grid grid-cols-3 gap-1.5">
             {DIET_OPTIONS.map(opt => (
               <button
@@ -310,7 +354,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
 
         {/* Allergens */}
         <div className="mb-4">
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Алергени</p>
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">{t.profile.allergens}</p>
           <div className="flex flex-wrap gap-1.5">
             {ALLERGEN_OPTIONS.map(opt => (
               <button
@@ -331,14 +375,14 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
 
         {/* Dislikes */}
         <div className="mb-4">
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Не люблю (продукти)</p>
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">{t.profile.dislikes}</p>
           <div className="flex gap-2 mb-2">
             <input
               type="text"
               value={dislikeInput}
               onChange={e => setDislikeInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addDislike()}
-              placeholder="Наприклад: кінза, гриби..."
+              placeholder={t.profile.dislike_placeholder}
               className="flex-1 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50"
             />
             <button
@@ -367,11 +411,11 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
 
         {/* Custom note */}
         <div className="mb-4">
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Додаткові побажання</p>
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">{t.profile.custom_notes}</p>
           <textarea
             value={customNote}
             onChange={e => setCustomNote(e.target.value)}
-            placeholder="Наприклад: без гострого, мало солі..."
+            placeholder={t.profile.custom_notes_placeholder}
             rows={2}
             maxLength={200}
             className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 resize-none"
@@ -384,7 +428,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
           disabled={saving}
           className="w-full bg-green-500 hover:bg-green-400 disabled:bg-green-500/50 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
         >
-          {saving ? 'Зберігаю...' : 'Зберегти вподобання'}
+          {saving ? t.common.saving : t.profile.save_prefs}
         </button>
       </div>
     </div>

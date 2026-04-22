@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Mascot from '@/components/mascot'
 import { useActiveMascot } from '@/components/mascot-provider'
+import { useTranslation } from '@/lib/i18n/client'
 
 // Map dimensions — larger nodes with more spacing for 3D effect
 const MAP_WIDTH = 340
@@ -54,6 +55,7 @@ function generateSvgPath(nodes: { x: number; y: number }[]): string {
 
 export default function QuestMap({ challenges, completedIds, today }: Props) {
   const activeMascot = useActiveMascot()
+  const { t } = useTranslation()
   const activeRef = useRef<HTMLDivElement>(null)
   const completedSet = new Set(completedIds)
 
@@ -86,7 +88,7 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
   if (challenges.length === 0) {
     return (
       <div className="text-center py-12">
-        <Mascot name={activeMascot as any} mood="sad" size={120} message="Квестів поки немає..." />
+        <Mascot name={activeMascot as any} mood="sad" size={120} message={t.challenges.no_quests} />
       </div>
     )
   }
@@ -104,9 +106,9 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
         <div className="flex items-center gap-3">
           <Mascot name={activeMascot as any} mood="happy" size={48} animation="idle" interactive={false} />
           <div>
-            <h1 className="text-lg font-extrabold text-white">Мапа квестів</h1>
+            <h1 className="text-lg font-extrabold text-white">{t.challenges.map}</h1>
             <p className="text-xs text-gray-400">
-              Сьогодні: <span className="text-purple-400 font-bold">{currentCuisine}</span> кухня
+              {t.challenges.today}: <span className="text-purple-400 font-bold">{currentCuisine}</span> {t.challenges.cuisine}
             </p>
           </div>
         </div>
@@ -195,6 +197,7 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
                     isFirstInWeek={isFirstInWeek}
                     weekIdx={weekIdx}
                     cuisine={cuisine}
+                    t={t}
                   />
                 ) : (
                   <StaticNode
@@ -209,6 +212,7 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
                     isFirstInWeek={isFirstInWeek}
                     weekIdx={weekIdx}
                     cuisine={cuisine}
+                    t={t}
                   />
                 )}
               </div>
@@ -220,7 +224,7 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
   )
 }
 
-function ActiveNode({ theme, dayLabel, mascotName, index, href, isFirstInWeek, weekIdx, cuisine }: any) {
+function ActiveNode({ theme, dayLabel, mascotName, index, href, isFirstInWeek, weekIdx, cuisine, t }: any) {
   const d = NODE_RADIUS * 2
   const faceH = Math.round(d * 0.72) // ellipse: circle flattened by perspective
   return (
@@ -318,7 +322,7 @@ function ActiveNode({ theme, dayLabel, mascotName, index, href, isFirstInWeek, w
           <div className={`absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r ${theme.node} rounded-t-xl`} />
           {isFirstInWeek && (
             <p className={`text-[8px] uppercase tracking-widest font-bold bg-gradient-to-r ${theme.node} bg-clip-text text-transparent mb-0.5`}>
-              Маршрут {weekIdx + 1} &middot; {cuisine}
+              {t.challenges.route} {weekIdx + 1} &middot; {cuisine}
             </p>
           )}
           <p className="text-[9px] text-gray-400 font-semibold">{dayLabel}</p>
@@ -328,7 +332,7 @@ function ActiveNode({ theme, dayLabel, mascotName, index, href, isFirstInWeek, w
   )
 }
 
-function StaticNode({ theme, challenge, dayLabel, mascotName, isCompleted, isLocked, index, href, isFirstInWeek, weekIdx, cuisine }: any) {
+function StaticNode({ theme, challenge, dayLabel, mascotName, isCompleted, isLocked, index, href, isFirstInWeek, weekIdx, cuisine, t }: any) {
   const size = NODE_RADIUS * 2
   const thickness = DISC_THICKNESS
   const faceH = Math.round(size * 0.72) // ellipse perspective
@@ -424,7 +428,7 @@ function StaticNode({ theme, challenge, dayLabel, mascotName, isCompleted, isLoc
       <div className={`mt-1.5 bg-[#13132a]/80 border border-white/5 rounded-lg px-2.5 py-1 text-center ${isLocked ? 'opacity-40' : ''}`}>
         {isFirstInWeek && (
           <p className={`text-[7px] uppercase tracking-widest font-bold bg-gradient-to-r ${theme.node} bg-clip-text text-transparent`}>
-            Маршрут {weekIdx + 1} &middot; {cuisine}
+            {t.challenges.route} {weekIdx + 1} &middot; {cuisine}
           </p>
         )}
         <p className={`text-[9px] font-semibold ${isLocked ? 'text-gray-600' : 'text-gray-400'}`}>{dayLabel}</p>

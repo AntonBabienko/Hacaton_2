@@ -9,6 +9,7 @@ import {
   Home, ChefHat, Trophy, ShoppingBag, Target, Users, LogOut
 } from 'lucide-react'
 import { useActiveMascot, useBalance } from '@/components/mascot-provider'
+import { useTranslation } from '@/lib/i18n/client'
 
 interface NavbarProps {
   profile: User | null
@@ -21,6 +22,7 @@ export default function Navbar({ profile }: NavbarProps) {
   const supabase = createClient()
   const activeMascot = useActiveMascot()
   const balance = useBalance()
+  const { t } = useTranslation()
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -28,11 +30,11 @@ export default function Navbar({ profile }: NavbarProps) {
   }
 
   const navItems = [
-    { href: '/', icon: Home, label: 'Головна' },
-    { href: '/generate', icon: ChefHat, label: 'Рецепти' },
-    { href: '/challenges', icon: Target, label: 'Квести' },
-    { href: '/leaderboard', icon: Trophy, label: 'Рейтинг' },
-    { href: '/shop', icon: ShoppingBag, label: 'Магазин' },
+    { href: '/', icon: Home, label: t.nav.home },
+    { href: '/generate', icon: ChefHat, label: t.nav.recipes },
+    { href: '/challenges', icon: Target, label: t.nav.challenges },
+    { href: '/leaderboard', icon: Trophy, label: t.nav.leaderboard },
+    { href: '/shop', icon: ShoppingBag, label: t.nav.shop },
   ]
 
   return (
@@ -127,7 +129,7 @@ export default function Navbar({ profile }: NavbarProps) {
               )}>
                 <Users size={20} strokeWidth={pathname === '/friends' ? 2.5 : 1.8} />
               </div>
-              <span className="text-[10px] font-medium">Друзі</span>
+              <span className="text-[10px] font-medium">{t.nav.friends}</span>
             </Link>
           </div>
         </div>

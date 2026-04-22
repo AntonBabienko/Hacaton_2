@@ -8,6 +8,7 @@ import { cn, formatTime, compressImage } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
 import { useActiveMascot } from '@/components/mascot-provider'
+import { useTranslation } from '@/lib/i18n/client'
 
 interface Props {
   session: any
@@ -20,6 +21,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
   const router = useRouter()
   const activeMascot = useActiveMascot()
   const supabase = createClient()
+  const { t } = useTranslation()
   const [elapsed, setElapsed] = useState(0)
   const [currentStep, setCurrentStep] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
@@ -63,16 +65,16 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
         const result = await res.json()
 
         if (!result.matches) {
-          toast.error(`Фото не відповідає етапу. ${result.comment}`)
+          toast.error(`${t.cook.photo_mismatch} ${result.comment}`)
           return
         }
 
-        toast.success(`${result.comment} +${Math.floor(effectivePoints * 0.1)} бонус XP!`)
+        toast.success(`${result.comment} +${Math.floor(effectivePoints * 0.1)} ${t.cook.bonus_xp}`)
         const url = URL.createObjectURL(file)
         setStepPhotos(prev => ({ ...prev, [stepIndex]: url }))
         setCompletedSteps(prev => new Set([...prev, stepIndex]))
       } catch {
-        toast.error('Помилка оцінки фото')
+        toast.error(t.cook.eval_error)
       } finally {
         setEvaluating(false)
       }
@@ -91,7 +93,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
   async function finishCooking() {
     const lastStep = recipe.instructions.length - 1
     if (!stepPhotos[lastStep] && !completedSteps.has(lastStep)) {
-      toast.error('Додай фото готової страви!')
+      toast.error(t.cook.need_final_photo)
       activeStepForPhoto.current = lastStep
       fileInputRef.current?.click()
       return
@@ -119,7 +121,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
 
       if (rpcError) {
         console.error('RPC Error:', rpcError)
-        toast.error('Помилка збереження результатів')
+        toast.error(t.cook.save_error)
         return
       }
 
@@ -142,7 +144,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
       router.push('/')
     } catch (e: any) {
       console.error('Finish cooking exception:', e)
-      toast.error('Системна помилка збереження: ' + (e.message || 'Невідомо'))
+      toast.error(`${t.cook.sys_error}${e.message || t.cook.unknown}`)
     } finally {
       setFinishing(false)
     }
@@ -184,7 +186,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
         </div>
         <div className="mt-3">
           <div className="flex justify-between text-[10px] text-gray-500 mb-1">
-            <span>Прогрес</span>
+            <span>{t.cook.progress}</span>
             <span>{completedSteps.size}/{recipe.instructions.length}</span>
           </div>
           <div className="bg-white/5 rounded-full h-2">
@@ -239,7 +241,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
                           )}
                         >
                           <Camera size={14} />
-                          {evaluating ? 'Оцінюємо...' : isLastStep ? 'Фото страви' : 'Фото (+бонус)'}
+                          {evaluating ? t.cook.evaluating : isLastStep ? t.cook.dish_photo : t.cook.photo_bonus}
                         </button>
                       ) : (
                         <button
@@ -250,7 +252,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
                           className="flex items-center gap-2 px-3 py-2 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-xl text-xs font-bold transition-colors"
                         >
                           <Check size={14} />
-                          Готово
+                          {t.cook.done}
                         </button>
                       )}
                     </div>
@@ -264,7 +266,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
 
       {/* Mascot encouragement */}
       {progress >= 100 && (
-        <Mascot name={activeMascot as any} mood="happy" size={80} message="Чудова робота!" animation="celebrate" />
+        <Mascot name={activeMascot as any} mood="happy" size={80} message={t.cook.great_job} animation="celebrate" />
       )}
 
       <button
@@ -272,7 +274,7 @@ export default function CookingSession({ session, recipe, userId, cookCount }: P
         disabled={finishing}
         className="w-full bg-green-500 hover:bg-green-400 disabled:opacity-60 text-white font-bold py-4 rounded-2xl text-lg transition-colors"
       >
-        {finishing ? 'Зберігаємо...' : 'Страву готово!'}
+        {finishing ? t.cook.saving : t.cook.finish_cooking}
       </button>
     </div>
   )

@@ -7,6 +7,7 @@ import { ChevronDown, ChevronUp, Bookmark, BookmarkCheck, Swords } from 'lucide-
 import { cn } from '@/lib/utils'
 import { DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
+import { useTranslation } from '@/lib/i18n/client'
 
 interface Props {
   recipe: any
@@ -18,6 +19,7 @@ interface Props {
 export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: Props) {
   const router = useRouter()
   const supabase = createClient()
+  const { t } = useTranslation()
   const [ingredientsOpen, setIngredientsOpen] = useState(false)
   const [isSaved, setIsSaved] = useState(!!savedRecipe)
   const [showBattleModal, setShowBattleModal] = useState(false)
@@ -36,7 +38,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
     })
     if (!error) {
       setIsSaved(true)
-      toast.success('Рецепт збережено!')
+      toast.success(t.recipe.saved)
     }
   }
 
@@ -49,7 +51,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
     }).select().single()
 
     if (error || !data) {
-      toast.error('Помилка')
+      toast.error(t.recipe.error)
       return
     }
     router.push(`/cook/${data.id}`)
@@ -57,7 +59,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
 
   async function handleBattleInvite() {
     if (!selectedFriend) {
-      toast.error('Оберіть друга')
+      toast.error(t.recipe.choose_friend)
       return
     }
 
@@ -69,7 +71,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
     }).select().single()
 
     if (error || !data) {
-      toast.error('Помилка створення батлу')
+      toast.error(t.recipe.battle_error)
       return
     }
 
@@ -84,7 +86,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
       read: false,
     })
 
-    toast.success('Виклик надіслано!')
+    toast.success(t.recipe.invite_sent)
     setShowBattleModal(false)
     router.push(`/battle/${data.id}`)
   }
@@ -106,7 +108,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
           </span>
           <span className="text-orange-400 font-bold text-sm">+{effectivePoints} XP</span>
           {savedRecipe && savedRecipe.cook_count > 0 && (
-            <span className="text-[10px] text-gray-600">(повторно)</span>
+            <span className="text-[10px] text-gray-600">{t.recipe.repeated}</span>
           )}
           <span className="text-gray-500 text-xs">{recipe.cuisine_type}</span>
         </div>
@@ -116,7 +118,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
           className="flex items-center gap-1 text-sm text-orange-400 hover:text-orange-300 mt-4"
         >
           {ingredientsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          Інгредієнти ({recipe.ingredients.length})
+          {t.recipe.ingredients} ({recipe.ingredients.length})
         </button>
         {ingredientsOpen && (
           <div className="flex flex-wrap gap-1.5 mt-2">
@@ -131,7 +133,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
 
       {/* Steps */}
       <div className="bg-[#1a1a2e] rounded-2xl border border-white/5 p-5">
-        <h2 className="font-bold text-white mb-3">Покрокова інструкція</h2>
+        <h2 className="font-bold text-white mb-3">{t.recipe.instructions}</h2>
         <div className="space-y-3">
           {recipe.instructions.map((step: any, i: number) => (
             <div key={i} className="flex gap-3">
@@ -143,7 +145,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
                 <p className="text-gray-500 text-xs mt-0.5">{step.description}</p>
                 {step.requires_photo && (
                   <span className="text-[10px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded mt-1 inline-block font-bold">
-                    📸 Потрібне фото
+                    {t.recipe.need_photo}
                   </span>
                 )}
               </div>
@@ -158,7 +160,7 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
           onClick={handleCookAlone}
           className="bg-orange-500 hover:bg-orange-400 text-white font-bold py-3 rounded-xl transition-colors text-sm"
         >
-          Готувати
+          {t.recipe.cook}
         </button>
         <button
           onClick={() => setShowBattleModal(true)}
@@ -166,27 +168,27 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
           className="bg-red-500 hover:bg-red-400 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
         >
           <Swords size={16} />
-          Батл
+          {t.recipe.battle}
         </button>
       </div>
       {!friends.length && (
-        <p className="text-[10px] text-gray-600 text-center">Додай друзів для батлів</p>
+        <p className="text-[10px] text-gray-600 text-center">{t.recipe.add_friends}</p>
       )}
 
       {/* Battle modal */}
       {showBattleModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-[#1a1a2e] rounded-2xl border border-white/10 p-6 w-full max-w-sm">
-            <h3 className="font-extrabold text-white text-lg mb-4">Виклик на батл ⚔️</h3>
+            <h3 className="font-extrabold text-white text-lg mb-4">{t.recipe.challenge_title}</h3>
             <p className="text-sm text-gray-400 mb-4">
-              {recipe.name} • <span className="text-orange-400 font-bold">{Math.round(recipe.points * 2.6)} XP</span> в пулі
+              {recipe.name} • <span className="text-orange-400 font-bold">{Math.round(recipe.points * 2.6)} XP</span> {t.recipe.in_pool}
             </p>
             <select
               value={selectedFriend}
               onChange={e => setSelectedFriend(e.target.value)}
               className="w-full px-4 py-2.5 bg-[#1a1a2e] border border-white/10 rounded-xl text-white mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
             >
-              <option value="" className="bg-[#1a1a2e]">Оберіть друга</option>
+              <option value="" className="bg-[#1a1a2e]">{t.recipe.choose_friend}</option>
               {friends.map((f: any) => (
                 <option key={f.id} value={f.friend?.id} className="bg-[#1a1a2e]">
                   {f.friend?.username}
@@ -198,13 +200,13 @@ export default function RecipeDetail({ recipe, userId, savedRecipe, friends }: P
                 onClick={() => setShowBattleModal(false)}
                 className="py-2.5 border border-white/10 rounded-xl text-gray-400 hover:bg-white/5 text-sm"
               >
-                Скасувати
+                {t.recipe.cancel}
               </button>
               <button
                 onClick={handleBattleInvite}
                 className="py-2.5 bg-red-500 hover:bg-red-400 text-white rounded-xl font-bold text-sm"
               >
-                Надіслати
+                {t.recipe.send}
               </button>
             </div>
           </div>

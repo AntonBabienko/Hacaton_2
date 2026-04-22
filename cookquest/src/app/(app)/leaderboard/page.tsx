@@ -93,9 +93,8 @@ export default async function LeaderboardPage() {
         {leaders?.slice(leaders.length >= 3 ? 3 : 0).map((leader, i) => (
           <div
             key={leader.id}
-            className={`flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-0 transition-colors ${
-              leader.id === user!.id ? 'bg-orange-500/10' : 'hover:bg-white/[0.02]'
-            }`}
+            className={`flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-0 transition-colors ${leader.id === user!.id ? 'bg-orange-500/10' : 'hover:bg-white/[0.02]'
+              }`}
           >
             <div className="w-7 text-center text-xs font-bold text-gray-600">
               #{(leaders.length >= 3 ? i + 4 : i + 1)}

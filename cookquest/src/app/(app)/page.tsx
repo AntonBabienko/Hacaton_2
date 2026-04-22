@@ -4,8 +4,10 @@ import { getLevelInfo, getXpProgress, getCurrentCuisine, getTodayDate } from '@/
 import { Camera, Shuffle, Swords, Target, Trophy, Zap } from 'lucide-react'
 import { MascotStatic } from '@/components/mascot'
 import { DEFAULT_MASCOT } from '@/lib/constants'
+import { getDictionary } from '@/lib/i18n'
 
 export default async function HomePage() {
+  const t = await getDictionary()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -56,10 +58,10 @@ export default async function HomePage() {
 
   // Greeting messages
   const greetings = [
-    `Вітаю, ${profile?.username || 'Кухарю'}!`,
-    `Готовий до пригод?`,
-    `Що приготуємо сьогодні?`,
-    `Шеф на кухні!`,
+    `${t.home.greeting}, ${profile?.username || t.home.cook}!`,
+    t.home.ready_for_adventure,
+    t.home.what_to_cook,
+    t.home.chef_in_kitchen,
   ]
   const greeting = greetings[Math.floor(Date.now() / 86400000) % greetings.length]
 
@@ -107,7 +109,7 @@ export default async function HomePage() {
           {/* Player Info */}
           <div className="flex-1 min-w-0">
             <h1 className="text-lg font-extrabold text-white truncate">
-              {profile?.username || 'Кухарю'}
+              {profile?.username || t.home.cook}
             </h1>
             <p className="text-xs text-gray-400 font-medium">{levelInfo.name}</p>
             <div className="mt-2 flex items-center gap-1.5">
@@ -127,15 +129,15 @@ export default async function HomePage() {
         <div className="grid grid-cols-3 gap-2 mt-4">
           <div className="bg-white/5 rounded-xl p-2.5 text-center">
             <p className="text-lg font-extrabold text-yellow-400">{totalCooked}</p>
-            <p className="text-[10px] text-gray-500 font-medium">Рецептів</p>
+            <p className="text-[10px] text-gray-500 font-medium">{t.home.recipes}</p>
           </div>
           <div className="bg-white/5 rounded-xl p-2.5 text-center">
             <p className="text-lg font-extrabold text-purple-400">{totalCompleted}</p>
-            <p className="text-[10px] text-gray-500 font-medium">Квестів</p>
+            <p className="text-[10px] text-gray-500 font-medium">{t.home.quests}</p>
           </div>
           <div className="bg-white/5 rounded-xl p-2.5 text-center">
             <p className="text-lg font-extrabold text-orange-400">{profile?.rating_score || 0}</p>
-            <p className="text-[10px] text-gray-500 font-medium">Рейтинг</p>
+            <p className="text-[10px] text-gray-500 font-medium">{t.home.rating}</p>
           </div>
         </div>
       </div>
@@ -156,12 +158,12 @@ export default async function HomePage() {
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-red-300 text-sm">
-                    {battle.challenger?.username} кидає виклик!
+                    {t.home.battle_challenge.replace('{username}', battle.challenger?.username || '')}
                   </p>
                   <p className="text-xs text-red-400/60">{battle.recipe?.name}</p>
                 </div>
                 <span className="text-xs text-red-400 font-bold bg-red-500/20 px-2 py-1 rounded-lg">
-                  БАТЛ
+                  {t.home.battle}
                 </span>
               </div>
             </Link>
@@ -182,13 +184,13 @@ export default async function HomePage() {
                   <Target size={20} className="text-purple-400" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">Квест дня</p>
-                  <p className="text-xs text-gray-500">{cuisine} кухня</p>
+                  <p className="text-[10px] text-purple-400 font-bold uppercase tracking-wider">{t.home.challenge_of_day}</p>
+                  <p className="text-xs text-gray-500">{cuisine} {t.home.cuisine}</p>
                 </div>
               </div>
               <p className="text-sm font-bold text-white mt-1">{todayChallenge.description}</p>
               <div className="mt-3 bg-purple-500 hover:bg-purple-400 text-white text-center font-bold py-2 rounded-xl text-sm transition-colors">
-                Виконати квест
+                {t.home.complete_quest}
               </div>
             </div>
           </Link>
@@ -199,8 +201,8 @@ export default async function HomePage() {
                 <Target size={20} className="text-purple-400" />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">Тиждень {cuisine} кухні</p>
-                <p className="text-xs text-gray-500">Готуй та отримуй бонусні бали</p>
+                <p className="text-sm font-bold text-white">{t.home.cuisine_week.replace('{cuisine}', cuisine)}</p>
+                <p className="text-xs text-gray-500">{t.home.cook_and_earn}</p>
               </div>
             </div>
           </div>
@@ -216,8 +218,8 @@ export default async function HomePage() {
           <div className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-orange-500/20 transition-all">
             <Camera className="text-orange-400" size={22} />
           </div>
-          <h3 className="font-bold text-white text-sm">Скан фото</h3>
-          <p className="text-[11px] text-gray-500 mt-1 leading-tight">AI визначить інгредієнти</p>
+          <h3 className="font-bold text-white text-sm">{t.home.scan_photo}</h3>
+          <p className="text-[11px] text-gray-500 mt-1 leading-tight">{t.home.ai_detects}</p>
         </Link>
 
         <Link
@@ -227,8 +229,8 @@ export default async function HomePage() {
           <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 group-hover:bg-amber-500/20 transition-all">
             <Shuffle className="text-amber-400" size={22} />
           </div>
-          <h3 className="font-bold text-white text-sm">Генератор</h3>
-          <p className="text-[11px] text-gray-500 mt-1 leading-tight">AI підбере рецепт</p>
+          <h3 className="font-bold text-white text-sm">{t.home.generator}</h3>
+          <p className="text-[11px] text-gray-500 mt-1 leading-tight">{t.home.ai_selects}</p>
         </Link>
       </div>
 
@@ -243,8 +245,8 @@ export default async function HomePage() {
             <Trophy className="text-yellow-400" size={20} />
           </div>
           <div className="flex-1">
-            <p className="font-bold text-white text-sm">Таблиця лідерів</p>
-            <p className="text-xs text-gray-500">Твій рейтинг: #{profile?.rating_score || '?'}</p>
+            <p className="font-bold text-white text-sm">{t.home.leaderboard}</p>
+            <p className="text-xs text-gray-500">{t.home.your_rating.replace('{rating}', profile?.rating_score || '?')}</p>
           </div>
           <span className="text-xs text-yellow-400 font-bold">→</span>
         </div>

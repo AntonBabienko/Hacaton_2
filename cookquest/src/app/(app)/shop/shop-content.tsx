@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
 import { useActiveMascot, useSetActiveMascot, useBalance, useSetBalance } from '@/components/mascot-provider'
 import GenerateMascotSection, { CUSTOM_MASCOT_IMAGES } from './generate-mascot-section'
+import { useTranslation } from '@/lib/i18n/client'
 
 interface Props {
   userId: string
@@ -34,6 +35,7 @@ export default function ShopContent({
   const supabase = createClient()
   const setGlobalMascot = useSetActiveMascot()
   const [customHappyUrl, setCustomHappyUrl] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   // Load custom mascot image from localStorage when active
   useEffect(() => {
@@ -52,23 +54,23 @@ export default function ShopContent({
   }
 
   async function buySkin(skin: any) {
-    if (balance < skin.price) { toast.error('Недостатньо балів!'); return }
+    if (balance < skin.price) { toast.error(t.shop.not_enough_money); return }
     // Local items (no DB) — just mark as owned locally
     if (skin._local) {
       setOwned(prev => new Set([...prev, skin.id]))
       await supabase.from('profiles').update({ balance: balance - skin.price }).eq('id', userId)
       setBalance(b => b - skin.price)
-      toast.success(`${skin.name} тепер твій! Запустіть SQL міграцію щоб зберегти постійно.`)
+      toast.success(t.shop.buy_success)
       return
     }
     setBuying(skin.id)
     try {
       const { error } = await supabase.from('user_skins').insert({ user_id: userId, skin_id: skin.id })
-      if (error) { toast.error('Помилка покупки'); return }
+      if (error) { toast.error(t.shop.buy_error); return }
       await supabase.from('profiles').update({ balance: balance - skin.price }).eq('id', userId)
       setBalance(b => b - skin.price)
       setOwned(prev => new Set([...prev, skin.id]))
-      toast.success(`${skin.name} тепер твій!`)
+      toast.success(t.shop.buy_success)
     } finally {
       setBuying(null)
     }
@@ -80,14 +82,14 @@ export default function ShopContent({
     if (skin._local) {
       setActiveSkinId(skin.id)
       setGlobalMascot(mascotKey)
-      toast.success('Маскот встановлено! (локально — запустіть SQL міграцію)')
+      toast.success(t.shop.activate_success)
       return
     }
     const { error } = await supabase.from('profiles').update({ current_skin_id: skin.id }).eq('id', userId)
-    if (error) { toast.error('Помилка'); return }
+    if (error) { toast.error(t.shop.activate_error); return }
     setActiveSkinId(skin.id)
     setGlobalMascot(mascotKey)
-    toast.success('Маскот встановлено!')
+    toast.success(t.shop.activate_success)
   }
 
   // If no skins in DB — show mascots from constants directly
@@ -110,9 +112,9 @@ export default function ShopContent({
             <ShoppingBag size={20} className="text-purple-400" />
           </div>
           <div>
-            <h1 className="text-lg font-extrabold text-white">Магазин маскотів</h1>
+            <h1 className="text-lg font-extrabold text-white">{t.shop.title}</h1>
             <p className="text-xs text-gray-400">
-              Баланс: <span className="text-yellow-400 font-bold text-sm">💰 {balance}</span>
+              {t.profile.balance}: <span className="text-yellow-400 font-bold text-sm">💰 {balance}</span>
             </p>
           </div>
         </div>
@@ -120,7 +122,7 @@ export default function ShopContent({
 
       {/* Active mascot preview */}
       <div className="bg-[#1a1a2e] rounded-2xl border border-orange-500/20 p-4">
-        <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider mb-2">Активний маскот</p>
+        <p className="text-[10px] text-orange-400 font-bold uppercase tracking-wider mb-2">{t.shop.active}</p>
         <div className="flex items-center gap-4">
           {activeMascot === 'custom' && customHappyUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -177,21 +179,21 @@ export default function ShopContent({
 
               <div className="flex justify-center mt-2">
                 <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-bold', RARITY_COLORS[skin.rarity as keyof typeof RARITY_COLORS])}>
-                  {skin.rarity === 'common' ? 'Звичайний' : skin.rarity === 'rare' ? 'Рідкісний' : skin.rarity === 'epic' ? 'Епічний' : 'Легендарний'}
+                  {skin.rarity}
                 </span>
               </div>
 
               <div className="mt-3">
                 {isActive ? (
                   <div className="w-full text-center py-2 text-orange-400 text-xs font-bold flex items-center justify-center gap-1">
-                    <Check size={14} /> Активний
+                    <Check size={14} /> {t.shop.active}
                   </div>
                 ) : isOwned ? (
                   <button
                     onClick={() => equipSkin(skin)}
                     className="w-full bg-green-500/10 hover:bg-green-500/20 text-green-400 font-bold py-2 rounded-xl text-xs transition-colors"
                   >
-                    Обрати
+                    {t.shop.owned}
                   </button>
                 ) : (
                   <button
@@ -202,7 +204,7 @@ export default function ShopContent({
                       canAfford ? 'bg-orange-500 hover:bg-orange-400 text-white' : 'bg-white/5 text-gray-600 cursor-not-allowed'
                     )}
                   >
-                    {buying === skin.id ? '...' : skin.price === 0 ? 'Безкоштовно' : `💰 ${skin.price}`}
+                    {buying === skin.id ? '...' : skin.price === 0 ? t.shop.owned : `💰 ${skin.price}`}
                   </button>
                 )}
               </div>

@@ -21,10 +21,10 @@ function GenerateContent() {
   const [mode, setMode] = useState<'photo' | 'random'>(initialMode)
   const [photos, setPhotos] = useState<File[]>([])
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
-  
+
   // Clean prompt for the UI (if user wants to edit)
   const [prompt, setPrompt] = useState(searchParams.get('challengeDescription') || '')
-  
+
   // Hidden system context from the URL
   const challengeCuisine = searchParams.get('cuisine')
   const challengeDescription = searchParams.get('challengeDescription')
@@ -50,11 +50,11 @@ function GenerateContent() {
       toast.error('Максимум 3 фото')
       return
     }
-    
+
     try {
       const compressedBlob = await compressImage(file)
       const compressedFile = new File([compressedBlob], file.name, { type: 'image/jpeg' })
-      
+
       setPhotos(prev => [...prev, compressedFile])
       const url = URL.createObjectURL(compressedFile)
       setPhotoPreviews(prev => [...prev, url])
@@ -136,9 +136,9 @@ function GenerateContent() {
       const res = await fetch('/api/generate-random-recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           prompt: prompt || challengeDescription || 'будь-що смачне',
-          challengeCuisine 
+          challengeCuisine
         }),
       })
       const data = await res.json()
@@ -195,12 +195,12 @@ function GenerateContent() {
   if (loading && challengeDescription && step === 'input') {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-6">
-        <Mascot 
-          name={activeMascot as any} 
-          mood="happy" 
-          size={120} 
-          message="Готую найкращі рецепти для твого квесту..." 
-          animation="bounce" 
+        <Mascot
+          name={activeMascot as any}
+          mood="happy"
+          size={120}
+          message="Готую найкращі рецепти для твого квесту..."
+          animation="bounce"
         />
         <div className="flex gap-2">
           <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="w-3 h-3 bg-orange-500 rounded-full" />

@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
 import { useActiveMascot } from '@/components/mascot-provider'
+import { useTranslation } from '@/lib/i18n/client'
 
 interface Props {
   battle: any
@@ -21,6 +22,7 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
   const router = useRouter()
   const activeMascot = useActiveMascot()
   const supabase = createClient()
+  const { t } = useTranslation()
   const [currentBattle, setCurrentBattle] = useState(battle)
   const [ingredientsOpen, setIngredientsOpen] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -78,7 +80,7 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
     startTimeRef.current = Date.now()
     setIsCooking(true)
     setRecipeVisible(true)
-    toast.success('Таймер пішов!')
+    toast.success(t.battle.timer_started)
   }
 
   async function submitResult(file: File) {
@@ -124,11 +126,11 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
         }))
       }
 
-      toast.success(`Якість: ${result.quality}/100`)
+      toast.success(`${t.battle.quality} ${result.quality}/100`)
       // No router.push here - stay on page to see result via subscription or results screen
     } catch (err) {
       console.error(err)
-      toast.error('Помилка відправки')
+      toast.error(t.battle.submit_error)
     } finally {
       setFinishing(false)
     }
@@ -158,13 +160,13 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
             size={120}
             animation={won ? 'celebrate' : 'shake'}
           />
-          <h1 className="text-2xl font-extrabold text-white mt-2">{won ? 'Перемога!' : 'Наступного разу!'}</h1>
+          <h1 className="text-2xl font-extrabold text-white mt-2">{won ? t.battle.victory : t.battle.next_time}</h1>
           <p className="text-gray-400 mt-1">{currentBattle.recipe.name}</p>
           <div className="mt-4 text-3xl font-extrabold text-orange-400">+{myPts} XP</div>
           <p className="text-gray-500 text-sm mt-1">{opponent?.username}: +{oppPts} XP</p>
         </div>
         <button onClick={() => router.push('/')} className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-3 rounded-xl">
-          На головну
+          {t.battle.to_home}
         </button>
       </div>
     )
@@ -189,7 +191,7 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
       <div className="bg-gradient-to-br from-red-600/20 to-orange-600/20 border border-red-500/20 rounded-2xl p-5">
         <div className="flex items-center gap-2 mb-2">
           <Swords size={20} className="text-red-400" />
-          <span className="font-extrabold text-white text-lg">Батл</span>
+          <span className="font-extrabold text-white text-lg">{t.recipe.battle}</span>
         </div>
         <h2 className="text-lg font-bold text-white">{currentBattle.recipe.name}</h2>
         <p className="text-gray-400 text-sm mt-1">{currentBattle.recipe.description}</p>
@@ -197,7 +199,7 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
           <span className={cn('text-xs px-2 py-0.5 rounded-full font-bold', DIFFICULTY_COLORS[currentBattle.recipe.difficulty as keyof typeof DIFFICULTY_COLORS])}>
             {DIFFICULTY_LABELS[currentBattle.recipe.difficulty as keyof typeof DIFFICULTY_LABELS]}
           </span>
-          <span className="font-bold text-orange-400 text-sm">Пул: {totalPool} XP</span>
+          <span className="font-bold text-orange-400 text-sm">{t.battle.pool.replace('{pool}', totalPool.toString())}</span>
         </div>
       </div>
 
@@ -209,9 +211,9 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
               {isChallenger ? '👤' : opponent?.username?.[0]?.toUpperCase()}
             </div>
             <p className="text-sm font-bold text-white mt-1.5">
-              {isChallenger ? 'Ви' : opponent?.username}
+              {isChallenger ? t.battle.you : opponent?.username}
             </p>
-            {myFinishedAt && <p className="text-[10px] text-green-400 font-bold">✓ Готово</p>}
+            {myFinishedAt && <p className="text-[10px] text-green-400 font-bold">{t.battle.ready}</p>}
           </div>
           <div className="text-2xl">⚔️</div>
           <div className="text-center">
@@ -219,10 +221,10 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
               {!isChallenger ? '👤' : opponent?.username?.[0]?.toUpperCase()}
             </div>
             <p className="text-sm font-bold text-white mt-1.5">
-              {!isChallenger ? 'Ви' : opponent?.username}
+              {!isChallenger ? t.battle.you : opponent?.username}
             </p>
             {(isChallenger ? currentBattle.opponent_finished_at : currentBattle.challenger_finished_at) && (
-              <p className="text-[10px] text-green-400 font-bold">✓ Готово</p>
+              <p className="text-[10px] text-green-400 font-bold">{t.battle.ready}</p>
             )}
           </div>
         </div>
@@ -235,7 +237,7 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
           className="flex items-center gap-1 text-sm text-orange-400 hover:text-orange-300"
         >
           {ingredientsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          Інгредієнти ({currentBattle.recipe.ingredients.length})
+          {t.recipe.ingredients} ({currentBattle.recipe.ingredients.length})
         </button>
         {ingredientsOpen && (
           <div className="flex flex-wrap gap-1.5 mt-2">
@@ -251,7 +253,7 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
       {/* Recipe steps */}
       {recipeVisible && (
         <div className="bg-[#1a1a2e] rounded-2xl border border-white/5 p-5">
-          <h3 className="font-bold text-white mb-3">Рецепт</h3>
+          <h3 className="font-bold text-white mb-3">{t.battle.recipe}</h3>
           <div className="space-y-3">
             {currentBattle.recipe.instructions.map((step: any, i: number) => (
               <div key={i} className="flex gap-3">
@@ -275,7 +277,7 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
             <Clock size={20} />
             <span className="font-mono text-2xl font-extrabold">{formatTime(elapsed)}</span>
           </div>
-          <span className="text-xs text-orange-400/60">Таймер іде...</span>
+          <span className="text-xs text-orange-400/60">{t.battle.timer_running}</span>
         </div>
       )}
 
@@ -286,7 +288,7 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
           className="w-full bg-red-500 hover:bg-red-400 text-white font-bold py-4 rounded-2xl text-lg transition-colors animate-pulse-glow"
           style={{ '--accent-glow': 'rgba(239,68,68,0.3)' } as React.CSSProperties}
         >
-          ⚔️ Почати приготування
+          {t.battle.start_cooking}
         </button>
       )}
 
@@ -297,14 +299,14 @@ export default function BattlePage({ battle, userId, isChallenger }: Props) {
           className="w-full bg-green-500 hover:bg-green-400 disabled:opacity-60 text-white font-bold py-4 rounded-2xl text-lg transition-colors flex items-center justify-center gap-2"
         >
           <Camera size={20} />
-          {finishing ? 'Надсилаємо...' : 'Страву готово — фото'}
+          {finishing ? t.battle.sending : t.battle.dish_ready}
         </button>
       )}
 
       {myFinishedAt && currentBattle.status !== 'completed' && (
         <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 text-center">
-          <p className="text-green-400 font-bold text-sm">Результат надіслано ✓</p>
-          <p className="text-green-500/60 text-xs mt-1">Очікуємо суперника...</p>
+          <p className="text-green-400 font-bold text-sm">{t.battle.result_sent}</p>
+          <p className="text-green-500/60 text-xs mt-1">{t.battle.waiting_opponent}</p>
         </div>
       )}
     </div>

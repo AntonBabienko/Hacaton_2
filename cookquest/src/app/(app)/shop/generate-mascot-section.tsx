@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Wand2, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSetActiveMascot } from '@/components/mascot-provider'
+import { useTranslation } from '@/lib/i18n/client'
 
 // ─── Catalog data ─────────────────────────────────────────────────────────────
 
@@ -92,6 +93,7 @@ interface GeneratedEmotion {
 
 export default function GenerateMascotSection() {
   const setGlobalMascot = useSetActiveMascot()
+  const { t } = useTranslation()
 
   const [type, setType]             = useState('chef')
   const [style, setStyle]           = useState('cartoon')
@@ -155,28 +157,28 @@ export default function GenerateMascotSection() {
           <Wand2 size={18} className="text-purple-400" />
         </div>
         <div>
-          <p className="font-bold text-white text-sm">Генератор маскотів</p>
-          <p className="text-[10px] text-gray-500">ШІ • Stability AI • 3 емоції</p>
+          <p className="font-bold text-white text-sm">{t.shop.generator.title}</p>
+          <p className="text-[10px] text-gray-500">{t.shop.generator.subtitle}</p>
         </div>
       </div>
 
       {/* Type */}
       <div>
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">Тип</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">{t.shop.generator.type}</p>
         <div className="grid grid-cols-3 gap-1.5">
-          {TYPES.map(t => (
+          {TYPES.map(t_opt => (
             <button
-              key={t.id}
-              onClick={() => { setType(t.id); setSubjectName('') }}
+              key={t_opt.id}
+              onClick={() => { setType(t_opt.id); setSubjectName('') }}
               className={cn(
                 'flex flex-col items-center gap-0.5 py-2 rounded-xl border text-xs transition-all',
-                type === t.id
+                type === t_opt.id
                   ? 'border-purple-500 bg-purple-500/20 text-white'
                   : 'border-white/5 bg-white/[0.03] text-gray-400 hover:border-white/20',
               )}
             >
-              <span className="text-lg leading-none">{t.icon}</span>
-              <span className="text-[10px]">{t.label}</span>
+              <span className="text-lg leading-none">{t_opt.icon}</span>
+              <span className="text-[10px]">{(t.shop.generator.types as any)[t_opt.id]}</span>
             </button>
           ))}
         </div>
@@ -198,7 +200,7 @@ export default function GenerateMascotSection() {
 
       {/* Style */}
       <div>
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">Стиль</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">{t.shop.generator.style}</p>
         <div className="grid grid-cols-3 gap-1.5">
           {STYLES.map(s => (
             <button
@@ -211,7 +213,7 @@ export default function GenerateMascotSection() {
                   : 'border-white/5 bg-white/[0.03] text-gray-400 hover:border-white/20',
               )}
             >
-              {s.label}
+              {(t.shop.generator.styles as any)[s.id]}
             </button>
           ))}
         </div>
@@ -219,7 +221,7 @@ export default function GenerateMascotSection() {
 
       {/* Personality */}
       <div>
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">Характер</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">{t.shop.generator.personality}</p>
         <div className="grid grid-cols-3 gap-1.5">
           {PERSONALITIES.map(p => (
             <button
@@ -232,7 +234,7 @@ export default function GenerateMascotSection() {
                   : 'border-white/5 bg-white/[0.03] text-gray-400 hover:border-white/20',
               )}
             >
-              {p.label}
+              {(t.shop.generator.personalities as any)[p.id]}
             </button>
           ))}
         </div>
@@ -240,13 +242,13 @@ export default function GenerateMascotSection() {
 
       {/* Color */}
       <div>
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">Колір</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1.5">{t.shop.generator.color}</p>
         <div className="flex flex-wrap gap-2">
           {COLORS.map(c => (
             <button
               key={c.id}
               onClick={() => setColor(c.id)}
-              title={c.label}
+              title={(t.shop.generator.colors as any)[c.id]}
               className={cn(
                 'w-7 h-7 rounded-full border-2 transition-all',
                 color === c.id ? 'border-white scale-110' : 'border-transparent hover:scale-105',
@@ -273,13 +275,13 @@ export default function GenerateMascotSection() {
         )}
       >
         <Sparkles size={16} />
-        {loading ? 'Генерація... (~30с)' : 'Згенерувати маскота'}
+        {loading ? t.shop.generator.loading : t.shop.generator.button}
       </button>
 
       {/* Results */}
       {hasResults && (
         <div className="space-y-3">
-          <p className="text-[10px] text-gray-400 uppercase tracking-wider">Результат</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t.shop.generator.result}</p>
           <div className="grid grid-cols-3 gap-2">
             {(emotions ?? []).map(e => (
               <div key={e.emotion} className="flex flex-col items-center gap-1">
@@ -305,7 +307,7 @@ export default function GenerateMascotSection() {
               onClick={handleEquip}
               className="w-full bg-orange-500 hover:bg-orange-400 active:scale-95 text-white font-bold py-2.5 rounded-xl text-sm transition-all"
             >
-              Встановити маскота
+              {t.shop.generator.equip}
             </button>
           )}
         </div>
