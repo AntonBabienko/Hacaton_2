@@ -111,7 +111,7 @@ export default async function HomePage() {
             <h1 className="text-lg font-extrabold text-white truncate">
               {profile?.username || t.home.cook}
             </h1>
-            <p className="text-xs text-gray-400 font-medium">{levelInfo.name}</p>
+            <p className="text-xs text-gray-400 font-medium">{(t.constants.levels as any)[levelInfo.level]}</p>
             <div className="mt-2 flex items-center gap-1.5">
               <Zap size={12} className="text-green-400" />
               <div className="flex-1 bg-white/5 rounded-full h-2 overflow-hidden">

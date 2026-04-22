@@ -188,7 +188,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
           </div>
           <div className="flex-1">
             <h1 className="text-lg font-extrabold text-white">{profile?.username}</h1>
-            <p className="text-xs text-gray-400">{levelInfo.name} • {t.profile.level} {profile?.level}</p>
+            <p className="text-xs text-gray-400">{(t.constants.levels as any)[levelInfo.level]} • {t.profile.level} {profile?.level}</p>
             <div className="mt-2 flex items-center gap-1.5">
               <Zap size={12} className="text-green-400" />
               <div className="flex-1 bg-white/5 rounded-full h-2">
@@ -234,7 +234,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
                     <p className="font-bold text-white text-sm">{sr.recipe.name}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={cn('text-xs px-2 py-0.5 rounded-full', DIFFICULTY_COLORS[sr.recipe.difficulty as keyof typeof DIFFICULTY_COLORS])}>
-                        {DIFFICULTY_LABELS[sr.recipe.difficulty as keyof typeof DIFFICULTY_LABELS]}
+                        {(t.constants.difficulty as any)[sr.recipe.difficulty]}
                       </span>
                       <span className="text-xs text-gray-500">
                         {sr.cook_count > 0
@@ -279,8 +279,8 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
             interactive
           />
           <div>
-            <p className="font-bold text-white">{mascotInfo?.name || activeMascot}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{mascotInfo?.description}</p>
+            <p className="font-bold text-white">{(t.constants.mascots as any)[activeMascot]?.name || activeMascot}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{(t.constants.mascots as any)[activeMascot]?.description}</p>
             <Link
               href="/shop"
               className="inline-block mt-2 text-xs text-orange-400 hover:text-orange-300 font-bold"
@@ -346,7 +346,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
                 )}
               >
                 <span className="block text-base mb-0.5">{opt.emoji}</span>
-                {opt.label}
+                {(t.constants.diet as any)[opt.key]}
               </button>
             ))}
           </div>
@@ -367,7 +367,7 @@ export default function ProfileContent({ profile, savedRecipes }: Props) {
                     : 'bg-white/5 text-gray-400 border border-white/5 hover:bg-white/10'
                 )}
               >
-                {opt.emoji} {opt.label}
+                {opt.emoji} {(t.constants.allergens as any)[opt.key]}
               </button>
             ))}
           </div>

@@ -38,10 +38,10 @@ export default async function LeaderboardPage() {
             <Trophy size={20} className="text-yellow-400" />
           </div>
           <div>
-            <h1 className="text-lg font-extrabold text-white">Таблиця лідерів</h1>
+            <h1 className="text-lg font-extrabold text-white">{t.leaderboard.title}</h1>
             {myRank >= 0 && (
               <p className="text-xs text-gray-400">
-                Твоє місце: <span className="text-yellow-400 font-bold">#{myRank + 1}</span> з {leaders?.length}
+                {t.leaderboard.your_place} <span className="text-yellow-400 font-bold">#{myRank + 1}</span> {t.leaderboard.out_of.replace('{total}', leaders?.length.toString() || '0')}
               </p>
             )}
           </div>
@@ -90,7 +90,7 @@ export default async function LeaderboardPage() {
       {/* List */}
       <div className="bg-[#1a1a2e] rounded-2xl border border-white/5 overflow-hidden">
         {leaders && leaders.length === 0 && (
-          <p className="text-center text-gray-600 py-8 text-sm">Поки немає учасників</p>
+          <p className="text-center text-gray-600 py-8 text-sm">{t.leaderboard.no_participants}</p>
         )}
         {leaders?.slice(leaders.length >= 3 ? 3 : 0).map((leader, i) => (
           <div
@@ -107,7 +107,7 @@ export default async function LeaderboardPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-white text-sm truncate">{leader.username}</p>
-              <p className="text-[10px] text-gray-600">Рівень {leader.level}</p>
+              <p className="text-[10px] text-gray-600">{t.leaderboard.level.replace('{level}', leader.level.toString())}</p>
             </div>
             <div className="font-bold text-orange-400 text-sm">{leader.rating_score}</div>
           </div>

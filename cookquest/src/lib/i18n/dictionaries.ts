@@ -9,6 +9,51 @@ export const dictionaries = {
       success: 'Success',
       language: 'Language',
     },
+    constants: {
+      difficulty: {
+        easy: 'Easy',
+        medium: 'Medium',
+        hard: 'Hard'
+      },
+      levels: {
+        1: 'Beginner',
+        2: 'Novice Cook',
+        3: 'Cook',
+        4: 'Experienced Cook',
+        5: 'Chef',
+        6: 'Kitchen Master',
+        7: 'Grandmaster',
+        8: 'Kitchen Legend'
+      },
+      mascots: {
+        broccoli: { name: 'Broccoli', description: 'Cheerful veggie friend. Free starter mascot!' },
+        slime: { name: 'Slimey', description: 'Cute green slime reaching for knowledge' },
+        cheese: { name: 'Cheesy', description: 'True cheese magnate in your kitchen' },
+        pepper: { name: 'Peppy', description: 'Spicy and fiery assistant' },
+        icecream: { name: 'Frosty', description: 'Cold, but with a warm heart' },
+        stove: { name: 'Oven', description: 'Keeper of fire and taste' },
+        cauldron: { name: 'Cauldron', description: 'Master of magical cooking' },
+        knightpan: { name: 'Knight', description: 'Invincible warrior of the kitchen!' }
+      },
+      diet: {
+        none: 'No limits',
+        vegetarian: 'Vegetarian',
+        vegan: 'Vegan',
+        pescatarian: 'Pescatarian',
+        keto: 'Keto',
+        paleo: 'Paleo'
+      },
+      allergens: {
+        gluten: 'Gluten',
+        dairy: 'Dairy',
+        nuts: 'Nuts',
+        eggs: 'Eggs',
+        soy: 'Soy',
+        seafood: 'Seafood',
+        lactose: 'Lactose',
+        honey: 'Honey'
+      }
+    },
     home: {
       greeting: 'Greetings',
       cook: 'Cook',
@@ -248,6 +293,51 @@ export const dictionaries = {
       error: 'Помилка',
       success: 'Успіх',
       language: 'Мова',
+    },
+    constants: {
+      difficulty: {
+        easy: 'Легко',
+        medium: 'Середньо',
+        hard: 'Складно'
+      },
+      levels: {
+        1: 'Новачок',
+        2: 'Кухар-початківець',
+        3: 'Кухар',
+        4: 'Досвідчений кухар',
+        5: 'Шеф-кухар',
+        6: 'Майстер кухні',
+        7: 'Гранд-майстер',
+        8: 'Легенда кухні'
+      },
+      mascots: {
+        broccoli: { name: 'Броколі', description: 'Веселий друг-овоч. Безкоштовний стартовий маскот!' },
+        slime: { name: 'Слаймі', description: 'Милий зелений слайм, що тягнеться до знань' },
+        cheese: { name: 'Сирко', description: 'Справжній сирний магнат на твоїй кухні' },
+        pepper: { name: 'Перчик', description: 'Гострий та запальний помічник' },
+        icecream: { name: 'Морозко', description: 'Холодний, але з теплим серцем' },
+        stove: { name: 'Пічка', description: 'Хранитель вогню та смаку' },
+        cauldron: { name: 'Казанок', description: 'Майстер магічної кулінарії' },
+        knightpan: { name: 'Лицар', description: 'Непереможний воїн кухні!' }
+      },
+      diet: {
+        none: 'Без обмежень',
+        vegetarian: 'Вегетаріанець',
+        vegan: 'Веган',
+        pescatarian: 'Пескетаріанець',
+        keto: 'Кето',
+        paleo: 'Палео'
+      },
+      allergens: {
+        gluten: 'Глютен',
+        dairy: 'Молочні продукти',
+        nuts: 'Горіхи',
+        eggs: 'Яйця',
+        soy: 'Соя',
+        seafood: 'Морепродукти',
+        lactose: 'Лактоза',
+        honey: 'Мед'
+      }
     },
     home: {
       greeting: 'Вітаю',

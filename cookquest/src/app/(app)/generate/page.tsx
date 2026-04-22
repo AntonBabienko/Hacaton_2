@@ -201,7 +201,7 @@ function GenerateContent() {
           name={activeMascot as any}
           mood="happy"
           size={120}
-          message="Готую найкращі рецепти для твого квесту..."
+          message={t.generate.preparing}
           animation="bounce"
         />
         <div className="flex gap-2">
@@ -218,7 +218,7 @@ function GenerateContent() {
     return (
       <div className="space-y-4">
         <div className="flex justify-center">
-          <Mascot name={activeMascot as any} mood="happy" size={80} message="Обери рецепт!" animation="pop" />
+          <Mascot name={activeMascot as any} mood="happy" size={80} message={t.generate.choose_recipe} animation="pop" />
         </div>
         <div className="space-y-3">
           {recipes.map((recipe, i) => (
@@ -239,7 +239,7 @@ function GenerateContent() {
                 className="flex items-center gap-1 text-sm text-orange-400 hover:text-orange-300 mb-3"
               >
                 {expandedIngredients.has(i) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                Інгредієнти ({recipe.ingredients.length})
+                {t.generate.ingredients} ({recipe.ingredients.length})
               </button>
               {expandedIngredients.has(i) && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
@@ -255,7 +255,7 @@ function GenerateContent() {
                 onClick={() => selectRecipe(recipe)}
                 className="w-full bg-orange-500 hover:bg-orange-400 text-white font-bold py-2.5 rounded-xl transition-colors"
               >
-                Обрати цей рецепт
+                {t.generate.choose_this}
               </button>
             </div>
           ))}
@@ -269,11 +269,11 @@ function GenerateContent() {
     return (
       <div className="space-y-5">
         <div className="flex justify-center">
-          <Mascot name={activeMascot as any} mood="happy" size={80} message="Ось що я знайшов!" animation="pop" />
+          <Mascot name={activeMascot as any} mood="happy" size={80} message={t.generate.found_this} animation="pop" />
         </div>
         <div>
           <p className="text-sm text-gray-500 mt-1">
-            Натисни на продукт щоб <span className="text-red-400 font-bold">виключити</span> його
+            {t.generate.click_to_exclude} <span className="text-red-400 font-bold">{t.generate.exclude_word}</span> {t.generate.it}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -294,7 +294,7 @@ function GenerateContent() {
         </div>
         {excluded.size > 0 && (
           <p className="text-sm text-red-400">
-            Виключено: {excluded.size} продуктів
+            {t.generate.excluded_count.replace('{count}', excluded.size.toString())}
           </p>
         )}
         <button
@@ -302,7 +302,7 @@ function GenerateContent() {
           disabled={loading}
           className="w-full bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors"
         >
-          {loading ? 'Генеруємо рецепти...' : 'Знайти рецепти'}
+          {loading ? t.generate.generating_recipes : t.generate.find_recipes}
         </button>
       </div>
     )
@@ -312,7 +312,7 @@ function GenerateContent() {
   return (
     <div className="space-y-5">
       <div className="flex justify-center">
-        <Mascot name={activeMascot as any} mood="happy" size={90} message="Що приготуємо?" animation="pop" />
+        <Mascot name={activeMascot as any} mood="happy" size={90} message={t.generate.what_to_cook} animation="pop" />
       </div>
 
       {/* Mode tabs */}
@@ -325,7 +325,7 @@ function GenerateContent() {
           )}
         >
           <Camera size={16} />
-          Фото
+          {t.generate.photo}
         </button>
         <button
           onClick={() => setMode('random')}
@@ -335,7 +335,7 @@ function GenerateContent() {
           )}
         >
           <Shuffle size={16} />
-          Генератор
+          {t.generate.generator}
         </button>
       </div>
 
@@ -386,28 +386,28 @@ function GenerateContent() {
                   className="flex md:hidden items-center gap-1.5 px-3 py-1.5 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-lg text-xs font-bold transition-colors"
                 >
                   <Camera size={14} />
-                  Камера
+                  {t.generate.camera}
                 </button>
                 <button
                   onClick={() => galleryInputRef.current?.click()}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-400 rounded-lg text-xs font-bold transition-colors"
                 >
                   <Upload size={14} />
-                  Галерея
+                  {t.generate.gallery}
                 </button>
                 <span className="text-[10px] text-gray-600">{photos.length}/3</span>
               </div>
             )}
           </div>
           <p className="text-xs text-gray-600">
-            До 3 фото: холодильник, шафа, чек з магазину
+            {t.generate.photo_hint}
           </p>
           <button
             onClick={analyzePhotos}
             disabled={loading || !photos.length}
             className="w-full bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors"
           >
-            {loading ? 'Аналізуємо...' : 'Визначити продукти'}
+            {loading ? t.generate.analyzing : t.generate.detect_products}
           </button>
         </div>
       ) : (
@@ -416,16 +416,16 @@ function GenerateContent() {
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             rows={4}
-            placeholder="Опишіть побажання: бюджетне з курки, без цибулі, щось азіатське..."
+            placeholder={t.generate.prompt_placeholder}
             className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent resize-none text-sm"
           />
-          <p className="text-xs text-gray-600">Чим конкретніше — тим краще</p>
+          <p className="text-xs text-gray-600">{t.generate.prompt_hint}</p>
           <button
             onClick={generateRandom}
             disabled={loading}
             className="w-full bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors"
           >
-            {loading ? 'Генеруємо...' : 'Знайти рецепти'}
+            {loading ? t.generate.generating : t.generate.find_recipes}
           </button>
         </div>
       )}
