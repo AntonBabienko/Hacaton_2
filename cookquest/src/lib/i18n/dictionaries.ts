@@ -422,6 +422,8 @@ export const dictionaries = {
       title: 'Таблиця лідерів',
       your_place: 'Твоє місце: ',
       out_of: ' з {total}',
+      no_participants: 'Поки немає учасників',
+      level: 'Рівень {level}'
     },
     recipe: {
       saved: 'Рецепт збережено!',

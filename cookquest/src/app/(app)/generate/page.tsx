@@ -11,12 +11,14 @@ import { DIFFICULTY_LABELS, DIFFICULTY_COLORS } from '@/lib/constants'
 import { createClient } from '@/lib/supabase/client'
 import Mascot from '@/components/mascot'
 import { useActiveMascot } from '@/components/mascot-provider'
+import { useTranslation } from '@/lib/i18n/client'
 
 function GenerateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeMascot = useActiveMascot()
   const initialMode = searchParams.get('mode') === 'random' ? 'random' : 'photo'
+  const { t } = useTranslation()
 
   const [mode, setMode] = useState<'photo' | 'random'>(initialMode)
   const [photos, setPhotos] = useState<File[]>([])

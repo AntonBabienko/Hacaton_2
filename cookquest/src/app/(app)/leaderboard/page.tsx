@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { Trophy } from 'lucide-react'
 import { DEFAULT_MASCOT } from '@/lib/constants'
+import { getDictionary } from '@/lib/i18n'
 
 export default async function LeaderboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const t = await getDictionary()
 
   const [{ data: leaders }, { data: skins }] = await Promise.all([
     supabase
