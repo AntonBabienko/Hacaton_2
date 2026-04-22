@@ -6,11 +6,11 @@ export const defaultLocale = 'en'
 export async function getLocale(): Promise<Locale> {
   const cookieStore = await cookies()
   const localeCookie = cookieStore.get('NEXT_LOCALE')?.value
-  
+
   if (localeCookie === 'en' || localeCookie === 'uk') {
     return localeCookie as Locale
   }
-  
+
   return defaultLocale
 }
 

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getTodayDate } from '@/lib/utils'
 import { CUISINES_SCHEDULE } from '@/lib/constants'
 import { generateQuests } from '@/lib/challenges'
+import { getLocale } from '@/lib/i18n'
 import QuestMap from './quest-map'
 
 /** Get Monday of the week containing the given date */
@@ -35,6 +36,7 @@ function getWeekDates(weekStart: string): string[] {
 export default async function ChallengesPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const locale = await getLocale()
 
   const today = getTodayDate()
   const weekStart = getWeekStart(today)
@@ -54,7 +56,7 @@ export default async function ChallengesPage() {
     .order('date', { ascending: true })
 
   // Ensure we have challenges for both weeks
-  const ensureWeekQuests = async (startDate: string, dates: string[]) => {
+  const ensureWeekQuests = async (startDate: string, dates: string[], currentLocale: string) => {
     const weekQuests = (challenges || []).filter(c => dates.includes(c.date))
     if (weekQuests.length < 7) {
       try {
@@ -62,7 +64,7 @@ export default async function ChallengesPage() {
         const weekNumber = Math.floor(d.getTime() / (7 * 24 * 60 * 60 * 1000))
         const weekCuisine = CUISINES_SCHEDULE[weekNumber % CUISINES_SCHEDULE.length]
         
-        const quests = await generateQuests(weekCuisine, startDate)
+        const quests = await generateQuests(weekCuisine, startDate, currentLocale)
 
         if (quests?.length > 0) {
           // Only insert for missing dates
@@ -91,8 +93,8 @@ export default async function ChallengesPage() {
     return []
   }
 
-  const newCurrent = await ensureWeekQuests(weekStart, weekDates)
-  const newNext = await ensureWeekQuests(nextWeekStart, nextWeekDates)
+  const newCurrent = await ensureWeekQuests(weekStart, weekDates, locale)
+  const newNext = await ensureWeekQuests(nextWeekStart, nextWeekDates, locale)
 
   if (newCurrent.length > 0 || newNext.length > 0) {
     // Refresh challenges
