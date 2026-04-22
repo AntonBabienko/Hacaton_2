@@ -6,6 +6,7 @@ import { Users, Search, UserPlus, Check, X } from 'lucide-react'
 import Mascot from '@/components/mascot'
 import { useActiveMascot } from '@/components/mascot-provider'
 import { useTranslation } from '@/lib/i18n/client'
+import { createClient } from '@/lib/supabase/client'
 
 interface Props {
   userId: string
@@ -20,6 +21,9 @@ export default function FriendsContent({ userId, friends: initialFriends, incomi
 
   function getFriendMascot(friend: any): string {
     if (!friend?.current_skin_id) return 'broccoli'
+    return skinMap[friend.current_skin_id] || 'broccoli'
+  }
+
   const supabase = createClient()
   const { t } = useTranslation()
   const [friends, setFriends] = useState(initialFriends)
@@ -74,6 +78,8 @@ export default function FriendsContent({ userId, friends: initialFriends, incomi
       addressee_id: requesterId,
       status: 'accepted',
     })
+
+    const accepted = incoming.find(r => r.id === friendshipId)
 
     setFriends(prev => [...prev, {
       id: friendshipId,
@@ -138,6 +144,7 @@ export default function FriendsContent({ userId, friends: initialFriends, incomi
                   <p className="font-bold text-sm text-white">{user.username}</p>
                   <p className="text-[10px] text-gray-500">{t.friends.level.replace('{level}', user.level)} • {t.friends.points.replace('{points}', user.rating_score)}</p>
                 </div>
+                {!allKnownIds.has(user.id) ? (
                   <button
                     onClick={() => sendRequest(user.id, user.username)}
                     className="flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg text-xs font-bold transition-colors"
