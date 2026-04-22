@@ -93,8 +93,10 @@ export default async function ChallengesPage() {
     return []
   }
 
-  const newCurrent = await ensureWeekQuests(weekStart, weekDates, locale)
-  const newNext = await ensureWeekQuests(nextWeekStart, nextWeekDates, locale)
+  const [newCurrent, newNext] = await Promise.all([
+    ensureWeekQuests(weekStart, weekDates, locale),
+    ensureWeekQuests(nextWeekStart, nextWeekDates, locale)
+  ])
 
   if (newCurrent.length > 0 || newNext.length > 0) {
     // Refresh challenges

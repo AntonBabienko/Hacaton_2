@@ -55,7 +55,7 @@ function generateSvgPath(nodes: { x: number; y: number }[]): string {
 
 export default function QuestMap({ challenges, completedIds, today }: Props) {
   const activeMascot = useActiveMascot()
-  const { t } = useTranslation()
+  const { t, locale } = useTranslation()
   const activeRef = useRef<HTMLDivElement>(null)
   const completedSet = new Set(completedIds)
 
@@ -167,7 +167,8 @@ export default function QuestMap({ challenges, completedIds, today }: Props) {
             const theme = WEEK_THEMES[weekIdx % WEEK_THEMES.length]
 
             const date = new Date(challenge.date)
-            const dayLabel = date.toLocaleDateString('uk-UA', { weekday: 'short', day: 'numeric' })
+            const dateLocale = locale === 'en' ? 'en-US' : 'uk-UA'
+            const dayLabel = date.toLocaleDateString(dateLocale, { weekday: 'short', day: 'numeric' })
 
             const cuisine = challenge.cuisine_type || getCuisineFromDate(challenge.date)
             const desc = challenge.description

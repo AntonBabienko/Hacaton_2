@@ -132,10 +132,10 @@ export default function ShopContent({
           )}
           <div>
             <p className="font-bold text-white text-lg">
-              {activeMascot === 'custom' ? 'Кастомний' : (MASCOT_ITEMS.find(m => m.key === activeMascot)?.name || activeMascot)}
+              {activeMascot === 'custom' ? t.shop.generator.result : (MASCOT_ITEMS.find(m => m.key === activeMascot)?.name || activeMascot)}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">
-              {activeMascot === 'custom' ? 'Згенерований ШІ маскот' : MASCOT_ITEMS.find(m => m.key === activeMascot)?.description}
+              {activeMascot === 'custom' ? t.shop.generator.subtitle : MASCOT_ITEMS.find(m => m.key === activeMascot)?.description}
             </p>
           </div>
         </div>
