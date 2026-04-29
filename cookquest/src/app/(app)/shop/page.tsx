@@ -6,23 +6,25 @@ export default async function ShopPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('balance, current_skin_id')
-    .eq('id', user!.id)
-    .single()
-
-  // Fetch mascot skins ordered by price
-  const { data: skins } = await supabase
-    .from('skins')
-    .select('*')
-    .order('price', { ascending: true })
-
-  // Fetch what user already owns
-  const { data: userSkins } = await supabase
-    .from('user_skins')
-    .select('skin_id')
-    .eq('user_id', user!.id)
+  const [
+    { data: profile },
+    { data: skins },
+    { data: userSkins },
+  ] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('balance, current_skin_id')
+      .eq('id', user!.id)
+      .single(),
+    supabase
+      .from('skins')
+      .select('*')
+      .order('price', { ascending: true }),
+    supabase
+      .from('user_skins')
+      .select('skin_id')
+      .eq('user_id', user!.id),
+  ])
 
   const ownedIds = new Set((userSkins || []).map(s => s.skin_id))
 

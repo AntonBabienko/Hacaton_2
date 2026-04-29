@@ -16,7 +16,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq('id', user.id)
     .single()
 
-  // Derive active mascot from current_skin_id
   let activeMascot = DEFAULT_MASCOT
   if (profile?.current_skin_id) {
     const { data: skin } = await supabase

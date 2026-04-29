@@ -16,12 +16,13 @@ export default async function CookPage({ params }: { params: Promise<{ id: strin
 
   if (!session) notFound()
 
+  // saved_recipe lookup depends on session.recipe_id, but we already have it from the row
   const { data: savedRecipe } = await supabase
     .from('user_saved_recipes')
     .select('cook_count')
     .eq('user_id', user!.id)
     .eq('recipe_id', session.recipe_id)
-    .single()
+    .maybeSingle()
 
   return (
     <CookingSession

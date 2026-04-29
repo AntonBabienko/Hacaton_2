@@ -7,29 +7,25 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: recipe } = await supabase
-    .from('recipes')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const [{ data: recipe }, { data: savedRecipe }, { data: friends }] = await Promise.all([
+    supabase.from('recipes').select('*').eq('id', id).single(),
+    supabase
+      .from('user_saved_recipes')
+      .select('id, cook_count')
+      .eq('user_id', user!.id)
+      .eq('recipe_id', id)
+      .single(),
+    supabase
+      .from('friendships')
+      .select(`
+        id,
+        friend:profiles!friendships_addressee_id_fkey(id, username)
+      `)
+      .eq('requester_id', user!.id)
+      .eq('status', 'accepted'),
+  ])
 
   if (!recipe) notFound()
-
-  const { data: savedRecipe } = await supabase
-    .from('user_saved_recipes')
-    .select('id, cook_count')
-    .eq('user_id', user!.id)
-    .eq('recipe_id', id)
-    .single()
-
-  const { data: friends } = await supabase
-    .from('friendships')
-    .select(`
-      id,
-      friend:profiles!friendships_addressee_id_fkey(id, username)
-    `)
-    .eq('requester_id', user!.id)
-    .eq('status', 'accepted')
 
   return (
     <RecipeDetail

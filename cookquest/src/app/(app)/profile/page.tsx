@@ -8,28 +8,21 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+  // Fetch profile + saved recipes + all skins in parallel.
+  // Skins table is small (≤10 rows), and avoiding the dependent fetch saves a round-trip.
+  const [{ data: profile }, { data: savedRecipes }, { data: skins }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase
+      .from('user_saved_recipes')
+      .select('*, recipe:recipes(*)')
+      .eq('user_id', user.id)
+      .order('saved_at', { ascending: false }),
+    supabase.from('skins').select('id, emoji'),
+  ])
 
-  const { data: savedRecipes } = await supabase
-    .from('user_saved_recipes')
-    .select('*, recipe:recipes(*)')
-    .eq('user_id', user.id)
-    .order('saved_at', { ascending: false })
-
-  // Resolve active mascot key from current_skin_id
-  let activeSkinEmoji = DEFAULT_MASCOT
-  if (profile?.current_skin_id) {
-    const { data: skin } = await supabase
-      .from('skins')
-      .select('emoji')
-      .eq('id', profile.current_skin_id)
-      .single()
-    if (skin?.emoji) activeSkinEmoji = skin.emoji
-  }
+  const activeSkinEmoji = profile?.current_skin_id
+    ? (skins || []).find(s => s.id === profile.current_skin_id)?.emoji || DEFAULT_MASCOT
+    : DEFAULT_MASCOT
 
   return (
     <ProfileContent

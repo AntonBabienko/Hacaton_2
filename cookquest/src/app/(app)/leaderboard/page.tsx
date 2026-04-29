@@ -55,7 +55,7 @@ export default async function LeaderboardPage() {
           <div className="flex flex-col items-center">
             <div className="w-14 h-14 bg-gray-500/10 border-2 border-gray-400/30 rounded-2xl flex items-center justify-center overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getMascotSrc(leaders[1])} alt="" width={44} height={44} className="drop-shadow-sm" />
+              <img src={getMascotSrc(leaders[1])} alt="" width={44} height={44} decoding="async" className="drop-shadow-sm" />
             </div>
             <p className="text-xs font-bold text-white mt-1.5 truncate max-w-[70px]">{leaders[1].username}</p>
             <div className="bg-gray-500/20 text-gray-300 text-xs font-bold px-2 py-0.5 rounded-full mt-1">
@@ -66,7 +66,7 @@ export default async function LeaderboardPage() {
           <div className="flex flex-col items-center -mt-4">
             <div className="w-[72px] h-[72px] bg-yellow-500/10 border-2 border-yellow-400/50 rounded-2xl flex items-center justify-center overflow-hidden shadow-[0_0_20px_rgba(255,200,0,0.15)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getMascotSrc(leaders[0])} alt="" width={56} height={56} className="drop-shadow-md" />
+              <img src={getMascotSrc(leaders[0])} alt="" width={56} height={56} decoding="async" className="drop-shadow-md" />
             </div>
             <p className="text-sm font-extrabold text-yellow-400 mt-1.5 truncate max-w-[80px]">{leaders[0].username}</p>
             <div className="bg-yellow-500/20 text-yellow-400 text-xs font-bold px-2 py-0.5 rounded-full mt-1">
@@ -77,7 +77,7 @@ export default async function LeaderboardPage() {
           <div className="flex flex-col items-center">
             <div className="w-14 h-14 bg-amber-700/10 border-2 border-amber-600/30 rounded-2xl flex items-center justify-center overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getMascotSrc(leaders[2])} alt="" width={44} height={44} className="drop-shadow-sm" />
+              <img src={getMascotSrc(leaders[2])} alt="" width={44} height={44} decoding="async" className="drop-shadow-sm" />
             </div>
             <p className="text-xs font-bold text-white mt-1.5 truncate max-w-[70px]">{leaders[2].username}</p>
             <div className="bg-amber-600/20 text-amber-400 text-xs font-bold px-2 py-0.5 rounded-full mt-1">
@@ -103,7 +103,7 @@ export default async function LeaderboardPage() {
             </div>
             <div className="w-9 h-9 bg-white/5 rounded-xl flex items-center justify-center overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={getMascotSrc(leader)} alt="" width={32} height={32} className="drop-shadow-sm" />
+              <img src={getMascotSrc(leader)} alt="" width={32} height={32} loading="lazy" decoding="async" className="drop-shadow-sm" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-white text-sm truncate">{leader.username}</p>

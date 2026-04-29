@@ -7,37 +7,31 @@ import { DEFAULT_MASCOT } from '@/lib/constants'
 import { getDictionary } from '@/lib/i18n'
 
 export default async function HomePage() {
-  const t = await getDictionary()
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const [t, { data: { user } }] = await Promise.all([
+    getDictionary(),
+    supabase.auth.getUser(),
+  ])
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user!.id)
-    .single()
+  const today = getTodayDate()
 
-  const { data: todayChallenge } = await supabase
-    .from('challenges')
-    .select('*')
-    .eq('date', getTodayDate())
-    .single()
-
-  const { data: pendingBattles } = await supabase
-    .from('battles')
-    .select('id, recipe:recipes(name), challenger:profiles!battles_challenger_id_fkey(username)')
-    .eq('opponent_id', user!.id)
-    .eq('status', 'pending')
-
-  const { data: completedToday } = await supabase
-    .from('user_challenge_completions')
-    .select('id')
-    .eq('user_id', user!.id)
-
-  const { data: savedRecipes } = await supabase
-    .from('user_saved_recipes')
-    .select('id')
-    .eq('user_id', user!.id)
+  const [
+    { data: profile },
+    { data: todayChallenge },
+    { data: pendingBattles },
+    { data: completedToday },
+    { data: savedRecipes },
+  ] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user!.id).single(),
+    supabase.from('challenges').select('*').eq('date', today).single(),
+    supabase
+      .from('battles')
+      .select('id, recipe:recipes(name), challenger:profiles!battles_challenger_id_fkey(username)')
+      .eq('opponent_id', user!.id)
+      .eq('status', 'pending'),
+    supabase.from('user_challenge_completions').select('id', { count: 'exact', head: false }).eq('user_id', user!.id),
+    supabase.from('user_saved_recipes').select('id', { count: 'exact', head: false }).eq('user_id', user!.id),
+  ])
 
   const totalCooked = savedRecipes?.length || 0
   const totalCompleted = completedToday?.length || 0

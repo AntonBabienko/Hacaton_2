@@ -231,7 +231,7 @@ export default function Mascot({
               height={size}
               className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.3)] select-none pointer-events-none"
               draggable={false}
-              priority
+              loading="lazy"
             />
           </motion.div>
         </motion.div>
